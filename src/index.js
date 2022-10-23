@@ -1,3 +1,4 @@
+/* eslint-disable fp/no-mutation,fp/no-unused-expression,fp/no-nil */
 import { initializeApp } from "firebase/app";
 import {
   createUserWithEmailAndPassword,
@@ -21,12 +22,14 @@ import {
 import {
   getDownloadURL,
   getStorage,
+  listAll,
   ref,
   uploadBytesResumable,
 } from "firebase/storage";
 
 import { getFirebaseConfig } from "./firebase-config.js";
 
+const app = initializeApp( getFirebaseConfig() );
 // create sign in form
 const signInForm     = document.createElement( "form" );
 signInForm.id        = "sign-in-form";
@@ -52,11 +55,10 @@ signInForm.addEventListener( "submit", event => {
 } );
 
 // sign in
-async function signIn( email, password ) {
+const signIn = async( email, password ) => {
 
-  // get app
-  const app = initializeApp( getFirebaseConfig() );
-  // get auth
+  /* get app
+     get auth */
   const auth = getAuth( app );
 
   // create user with email and password or sign in
@@ -70,8 +72,7 @@ async function signIn( email, password ) {
 
   }
 
-}
-
+};
 const loginForm     = document.createElement( "form" );
 loginForm.id        = "login-form";
 loginForm.innerHTML = `
@@ -94,9 +95,8 @@ loginForm.addEventListener( "submit", event => {
 
 } );
 
-async function login( email, password ) {
+const login = async( email, password ) => {
 
-  const app  = initializeApp( getFirebaseConfig() );
   const auth = getAuth( app );
 
   try {
@@ -110,39 +110,96 @@ async function login( email, password ) {
 
   }
 
-}
+};
 
 // show sample text for signed user
 const greetUser = async() => {
 
-  const app  = initializeApp( getFirebaseConfig() );
   const auth = getAuth( app );
 
   if ( auth.currentUser ) {
 
-    const user          = auth.currentUser;
-    const paragraph     = document.createElement( "p" );
-    paragraph.innerHTML = `Hello ${ user.email }!`;
+    const user            = auth.currentUser;
+    const paragraph       = document.createElement( "p" );
+    paragraph.textContent = `Hello ${ user.email }!`;
     document.body.append( paragraph );
-    await checkUser();
+    await checkIfSubbed();
 
   }
 
 };
 
 // query firestore if user email is in database
-const checkUser = async() => {
+const checkIfSubbed = async() => {
 
-  const database      = getFirestore( initializeApp( getFirebaseConfig() ) );
+  const auth          = getAuth( app );
+  const database      = getFirestore( app );
   const querySnapshot = await getDocs( collection( database, "subscriptions" ) );
-  const subscriptions = querySnapshot.docs.map( document_ =>
-    console.log( document_.data() ) );
+
+  // list all documents
+  querySnapshot.docs.map( document_ =>
+    console.log( Object.values( document_.data() ) ) );
+  const ifSubscribed = querySnapshot.docs.some( document_ =>
+    Object.keys( document_.data() )[ 0 ] === auth.currentUser.email
+      && Object.values( document_.data() )[ 0 ] ===  true );
+  console.log( "ifSubscribed", ifSubscribed );
 
 };
-// button to get data from firestore
-const getDataButton     = document.createElement( "button" );
-getDataButton.id        = "get-data-button";
-getDataButton.innerHTML = "Get Data";
-document.body.append( getDataButton );
+// list files from firestore
+const getFiles = async() => {
 
-getDataButton.addEventListener( "click", checkUser );
+  // Create a reference with an initial file path and name
+  const storage       = getStorage();
+  const pathReference = ref( storage, "images/" );
+
+  try {
+
+    const listResult = await listAll( pathReference );
+    return listResult.items;
+
+  } catch ( error ) {
+
+    console.error( error );
+
+  }
+
+};
+// list download links for files
+const getDownloadLinks = async() => {
+
+  const files    = await getFiles();
+  const promises = files.map( file =>
+    getDownloadURL( ref( file ) )  );
+
+  try {
+
+    return await Promise.all( promises );
+
+  } catch ( error ) {
+
+    console.error( error );
+
+  }
+
+};
+const listLinks = links => {
+
+  const list = document.createElement( "ul" );
+  list.id    = "links-list";
+  links.map( link => {
+
+    const listItem     = document.createElement( "li" );
+    listItem.innerHTML = `<a href="${ link }">${ link }</a>`;
+    list.append( listItem );
+
+  } );
+  document.body.append( list );
+
+};
+listLinks( await getDownloadLinks() );
+
+// button to get data from firestore
+const getDataButton       = document.createElement( "button" );
+getDataButton.id          = "get-data-button";
+getDataButton.textContent = "Get Data";
+document.body.append( getDataButton );
