@@ -21,3 +21,4 @@ performance-monitoring/public/**/*.js
 performance-monitoring-start/public/**/*.js
 node_modules
 web
+dist/*

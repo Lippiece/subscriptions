@@ -40,7 +40,8 @@ signInForm.innerHTML = `
   <input type="password" id="sign-in-password" />
   <button type="submit">Sign In</button>
 `;
-document.body.append( signInForm );
+
+// document.body.append( signInForm );
 
 // auth on submit
 signInForm.addEventListener( "submit", event => {
@@ -54,14 +55,10 @@ signInForm.addEventListener( "submit", event => {
 
 } );
 
-// sign in
 const signIn = async( email, password ) => {
 
-  /* get app
-     get auth */
   const auth = getAuth( app );
 
-  // create user with email and password or sign in
   try {
 
     await createUserWithEmailAndPassword( auth, email, password );
@@ -103,6 +100,12 @@ const login = async( email, password ) => {
 
     await signInWithEmailAndPassword( auth, email, password );
     await greetUser();
+    if ( await checkIfSubbed() ) {
+
+      const links = await getDownloadLinks();
+      listLinks( links );
+
+    }
 
   } catch ( error ) {
 
@@ -123,7 +126,6 @@ const greetUser = async() => {
     const paragraph       = document.createElement( "p" );
     paragraph.textContent = `Hello ${ user.email }!`;
     document.body.append( paragraph );
-    await checkIfSubbed();
 
   }
 
@@ -136,13 +138,9 @@ const checkIfSubbed = async() => {
   const database      = getFirestore( app );
   const querySnapshot = await getDocs( collection( database, "subscriptions" ) );
 
-  // list all documents
-  querySnapshot.docs.map( document_ =>
-    console.log( Object.values( document_.data() ) ) );
-  const ifSubscribed = querySnapshot.docs.some( document_ =>
+  return querySnapshot.docs.some( document_ =>
     Object.keys( document_.data() )[ 0 ] === auth.currentUser.email
       && Object.values( document_.data() )[ 0 ] ===  true );
-  console.log( "ifSubscribed", ifSubscribed );
 
 };
 // list files from firestore
@@ -196,10 +194,70 @@ const listLinks = links => {
   document.body.append( list );
 
 };
-listLinks( await getDownloadLinks() );
+// new user form for admin to create new user
+const newUserForm     = document.createElement( "form" );
+newUserForm.id        = "new-user-form";
+newUserForm.innerHTML = `
+  <label for="new-user-email">Email</label>
+  <input type="email" id="new-user-email" />
+  <label for="new-user-password">Password</label>
+  <input type="password" id="new-user-password" />
+  <label for="new-user-sub-length">Subscription Length</label>
+  <input type="number" id="new-user-sub-length" />
+  <label for="new-user-sub-type">Subscription Type</label>
+  <select id="new-user-sub-type">
+    <option value="monthly">Monthly</option>
+    <option value="yearly">Yearly</option>
+  </select>
+  <button type="submit">Create User</button>
+`;
+document.body.append( newUserForm );
 
-// button to get data from firestore
-const getDataButton       = document.createElement( "button" );
-getDataButton.id          = "get-data-button";
-getDataButton.textContent = "Get Data";
-document.body.append( getDataButton );
+newUserForm.addEventListener( "submit", event => {
+
+  event.preventDefault();
+
+  const email    = newUserForm[ "new-user-email" ].value;
+  const password = newUserForm[ "new-user-password" ].value;
+  const length   = newUserForm[ "new-user-sub-length" ].value;
+  const type     = newUserForm[ "new-user-sub-type" ].value;
+
+  createUser( email, password, length, type );
+
+} );
+
+const createUser = async( email, password, length, type ) => {
+
+  const auth = getAuth( app );
+
+  try {
+
+    await createUserWithEmailAndPassword( auth, email, password );
+    await createSubscription( email, length, type );
+
+  } catch ( error ) {
+
+    console.error( error );
+
+  }
+
+};
+const createSubscription = async( email, length, type ) => {
+
+  const database = getFirestore( app );
+
+  try {
+
+    await setDoc( doc( database, "subscriptions", email ), {
+      [ email ]: true,
+      length,
+      type,
+    } );
+
+  } catch ( error ) {
+
+    console.error( error );
+
+  }
+
+};
