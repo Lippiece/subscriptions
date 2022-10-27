@@ -1,4 +1,5 @@
 /* eslint-disable fp/no-mutation,fp/no-unused-expression,fp/no-nil */
+import { css } from "@emotion/css";
 import { initializeApp } from "firebase/app";
 import {
   createUserWithEmailAndPassword,
@@ -29,47 +30,26 @@ import {
 
 import { getFirebaseConfig } from "./firebase-config.js";
 
-const app = initializeApp( getFirebaseConfig() );
-// create sign in form
-const signInForm     = document.createElement( "form" );
-signInForm.id        = "sign-in-form";
-signInForm.innerHTML = `
-  <label for="sign-in-email">Email</label>
-  <input type="email" id="sign-in-email" />
-  <label for="sign-in-password">Password</label>
-  <input type="password" id="sign-in-password" />
-  <button type="submit">Sign In</button>
-`;
+document.body.classList.add( css`
+  & {
+    font-family    : 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size      : 1.5em;
+    gap            : 1.5em;
+    display        : flex;
+    flex-direction : column;
+    align-items    : center;
+    justify-content: center;
+    height         : 100vh;
 
-// document.body.append( signInForm );
-
-// auth on submit
-signInForm.addEventListener( "submit", event => {
-
-  event.preventDefault();
-
-  const email    = signInForm[ "sign-in-email" ].value;
-  const password = signInForm[ "sign-in-password" ].value;
-
-  signIn( email, password );
-
-} );
-
-const signIn = async( email, password ) => {
-
-  const auth = getAuth( app );
-
-  try {
-
-    await createUserWithEmailAndPassword( auth, email, password );
-
-  } catch ( error ) {
-
-    console.error( error );
-
-  }
-
-};
+    form {
+      display        : flex;
+      gap            : 0.5em;
+      flex-direction : column;
+      align-items    : center;
+      justify-content: center;
+    }
+  }` );
+const app           = initializeApp( getFirebaseConfig() );
 const loginForm     = document.createElement( "form" );
 loginForm.id        = "login-form";
 loginForm.innerHTML = `
@@ -114,7 +94,6 @@ const login = async( email, password ) => {
   }
 
 };
-
 // show sample text for signed user
 const greetUser = async() => {
 
@@ -130,7 +109,6 @@ const greetUser = async() => {
   }
 
 };
-
 // query firestore if user email is in database
 const checkIfSubbed = async() => {
 
@@ -143,11 +121,13 @@ const checkIfSubbed = async() => {
       && Object.values( document_.data() )[ 0 ] ===  true );
 
 };
+
 // list files from firestore
 const getFiles = async() => {
 
-  // Create a reference with an initial file path and name
-  const storage       = getStorage();
+  const storage = getStorage();
+  /* TODO: reference based on user subscription type
+     const subscriptionType = await getSubscriptionType(); */
   const pathReference = ref( storage, "images/" );
 
   try {
@@ -162,6 +142,7 @@ const getFiles = async() => {
   }
 
 };
+
 // list download links for files
 const getDownloadLinks = async() => {
 
@@ -194,6 +175,7 @@ const listLinks = links => {
   document.body.append( list );
 
 };
+
 // new user form for admin to create new user
 const newUserForm     = document.createElement( "form" );
 newUserForm.id        = "new-user-form";
@@ -206,8 +188,9 @@ newUserForm.innerHTML = `
   <input type="number" id="new-user-sub-length" />
   <label for="new-user-sub-type">Subscription Type</label>
   <select id="new-user-sub-type">
-    <option value="monthly">Monthly</option>
-    <option value="yearly">Yearly</option>
+    <option value="A">A</option>
+    <option value="B">B</option>
+    <option value="C">C</option>
   </select>
   <button type="submit">Create User</button>
 `;
