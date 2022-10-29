@@ -7,18 +7,12 @@ import {
   signInWithEmailAndPassword,
 } from "firebase/auth";
 import {
-  addDoc,
   collection,
   doc,
+  getDoc,
   getDocs,
   getFirestore,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  serverTimestamp,
   setDoc,
-  updateDoc,
 } from "firebase/firestore";
 import {
   getDownloadURL,
@@ -54,9 +48,9 @@ const loginForm     = document.createElement( "form" );
 loginForm.id        = "login-form";
 loginForm.innerHTML = `
   <label for="login-email">Email</label>
-  <input type="email" id="login-email" />
+  <input type="email" id="login-email" autocomplete="login-email" />
   <label for="login-password">Password</label>
-  <input type="password" id="login-password" />
+  <input type="password" id="login-password" autocomplete="current-password" />
   <button type="submit">Login</button>
 `;
 document.body.append( loginForm );
@@ -71,21 +65,14 @@ loginForm.addEventListener( "submit", event => {
   login( email, password );
 
 } );
-
 const login = async( email, password ) => {
 
-  const auth = getAuth( app );
+  const auth = getAuth();
 
   try {
 
     await signInWithEmailAndPassword( auth, email, password );
-    await greetUser();
-    if ( await checkIfSubbed() ) {
-
-      const links = await getDownloadLinks();
-      listLinks( links );
-
-    }
+    await displayUserData();
 
   } catch ( error ) {
 
@@ -94,41 +81,119 @@ const login = async( email, password ) => {
   }
 
 };
-// show sample text for signed user
-const greetUser = async() => {
+const getUserType = async email => {
 
-  const auth = getAuth( app );
+  const database            = getFirestore( app );
+  const adminReference      = doc( database, "admins", email );
+  const subscriberReference = doc( database, "subscriptions", email );
+  const adminData           = await getDoc( adminReference );
+  const subscriberData      = await getDoc( subscriberReference );
+  const types               = {
+    admin: adminData.data(),
+    sub  : subscriberData.data(),
+  };
 
-  if ( auth.currentUser ) {
-
-    const user            = auth.currentUser;
-    const paragraph       = document.createElement( "p" );
-    paragraph.textContent = `Hello ${ user.email }!`;
-    document.body.append( paragraph );
-
-  }
+  return Object.keys( types )
+    .find( key =>
+      types[ key ] );
 
 };
-// query firestore if user email is in database
-const checkIfSubbed = async() => {
+const renderAdminUI = () => {
 
-  const auth          = getAuth( app );
-  const database      = getFirestore( app );
-  const querySnapshot = await getDocs( collection( database, "subscriptions" ) );
+  const newUserForm     = document.createElement( "form" );
+  newUserForm.id        = "new-user-form";
+  newUserForm.innerHTML = `
+  <label for="new-user-email">Email</label>
+  <input type="email" id="new-user-email" />
+  <label for="new-user-password">Password</label>
+  <input type="password" id="new-user-password" />
+  <label for="new-user-sub-length">Subscription Length</label>
+  <input type="number" id="new-user-sub-length" />
+  <label for="new-user-sub-type">Subscription Type</label>
+  <select id="new-user-sub-type">
+    <option value="A">A</option>
+    <option value="B">B</option>
+    <option value="C">C</option>
+  </select>
+  <button type="submit">Create User</button>
+`;
 
-  return querySnapshot.docs.some( document_ =>
-    Object.keys( document_.data() )[ 0 ] === auth.currentUser.email
-      && Object.values( document_.data() )[ 0 ] ===  true );
+  newUserForm.addEventListener( "submit", event => {
+
+    event.preventDefault();
+
+    const email    = newUserForm[ "new-user-email" ].value;
+    const password = newUserForm[ "new-user-password" ].value;
+    const length   = newUserForm[ "new-user-sub-length" ].value;
+    const type     = newUserForm[ "new-user-sub-type" ].value;
+
+    createUser( email, password, length, type );
+
+  } );
+  document.body.replaceChildren( newUserForm );
+
+};
+const subscriptionNotExpired = async() => {
+
+  const auth = getAuth();
+
+  // get "expires" value from user email document
+  const firestore             = getFirestore();
+  const userReference         = doc( firestore, "subscriptions", auth.currentUser.email );
+  const userData              = await getDoc( userReference );
+  const subscriptionDate      = userData.data().expires.seconds;
+  const subscriptionTimestamp = new Date( subscriptionDate * 1000 )
+    .getTime();
+
+  // check if subscription date is in the past
+  return subscriptionTimestamp > Date.now();
+
+};
+const displayUserData = async() => {
+
+  const auth           = getAuth();
+  const greeting       = document.createElement( "p" );
+  greeting.id          = "greeting";
+  greeting.textContent = `Hello ${ auth.currentUser.email }!`;
+  document.body.append( greeting );
+
+  const userType     = await getUserType( auth.currentUser.email );
+  const typesActions = {
+    admin: renderAdminUI,
+    sub  : async() => {
+
+      if ( await subscriptionNotExpired() ) {
+
+        console.log( "subscription not expired" );
+        const links = await getDownloadLinks();
+        return listLinks( links );
+
+      }
+      console.log( "subscription expired" );
+      const expiryParagraph       = document.createElement( "p" );
+      expiryParagraph.id          = "subscription-expired";
+      expiryParagraph.textContent = "Your subscription has expired.";
+      return document.body.append( expiryParagraph );
+
+    },
+  };
+  typesActions[ userType ]();
 
 };
 
 // list files from firestore
 const getFiles = async() => {
 
-  const storage = getStorage();
-  /* TODO: reference based on user subscription type
-     const subscriptionType = await getSubscriptionType(); */
-  const pathReference = ref( storage, "images/" );
+  const auth = getAuth();
+  // get "type" value from user email document
+  const firestore        = getFirestore();
+  const userReference    = doc( firestore, "subscriptions", auth.currentUser.email );
+  const userData         = await getDoc( userReference );
+  const subscriptionType = userData.data().type;
+
+  // get files from storage
+  const storage       = getStorage();
+  const pathReference = ref( storage, subscriptionType );
 
   try {
 
@@ -142,7 +207,6 @@ const getFiles = async() => {
   }
 
 };
-
 // list download links for files
 const getDownloadLinks = async() => {
 
@@ -175,44 +239,10 @@ const listLinks = links => {
   document.body.append( list );
 
 };
-
 // new user form for admin to create new user
-const newUserForm     = document.createElement( "form" );
-newUserForm.id        = "new-user-form";
-newUserForm.innerHTML = `
-  <label for="new-user-email">Email</label>
-  <input type="email" id="new-user-email" />
-  <label for="new-user-password">Password</label>
-  <input type="password" id="new-user-password" />
-  <label for="new-user-sub-length">Subscription Length</label>
-  <input type="number" id="new-user-sub-length" />
-  <label for="new-user-sub-type">Subscription Type</label>
-  <select id="new-user-sub-type">
-    <option value="A">A</option>
-    <option value="B">B</option>
-    <option value="C">C</option>
-  </select>
-  <button type="submit">Create User</button>
-`;
-document.body.append( newUserForm );
-
-newUserForm.addEventListener( "submit", event => {
-
-  event.preventDefault();
-
-  const email    = newUserForm[ "new-user-email" ].value;
-  const password = newUserForm[ "new-user-password" ].value;
-  const length   = newUserForm[ "new-user-sub-length" ].value;
-  const type     = newUserForm[ "new-user-sub-type" ].value;
-
-  createUser( email, password, length, type );
-
-} );
-
 const createUser = async( email, password, length, type ) => {
 
-  const auth = getAuth( app );
-
+  const auth = getAuth();
   try {
 
     await createUserWithEmailAndPassword( auth, email, password );
@@ -225,6 +255,13 @@ const createUser = async( email, password, length, type ) => {
   }
 
 };
+const addToDate = ( input, months ) => {
+
+  const output = new Date( input );
+  output.setMonth( output.getMonth() + months );
+  return output;
+
+};
 const createSubscription = async( email, length, type ) => {
 
   const database = getFirestore( app );
@@ -232,10 +269,11 @@ const createSubscription = async( email, length, type ) => {
   try {
 
     await setDoc( doc( database, "subscriptions", email ), {
-      [ email ]: true,
-      length,
+      expires: addToDate( Date.now(), Number( length ) ),
       type,
     } );
+
+    document.body.append( "User created!" );
 
   } catch ( error ) {
 

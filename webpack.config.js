@@ -7,7 +7,7 @@ export default {
   entry: glob.sync("./src/**/*.js"),
   // entry    : "/src/main/script.js",
   mode: "development",
-  devtool: "source-map",
+  devtool: "inline-source-map",
   experiments: {
     topLevelAwait: true,
   },
