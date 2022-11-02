@@ -1,0 +1,20 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /A/{resourceID} {
+      allow read: if firestore.get(/databases/(default)/documents/subscriptions/$(request.auth.token.email))
+      .data.type
+      == "A";
+    }
+    match /B/{resourceID} {
+      allow read: if firestore.get(/databases/(default)/documents/subscriptions/$(request.auth.token.email))
+      .data.type
+      == "B";
+    }
+    match /C/{resourceID} {
+			allow read: if firestore.get(/databases/(default)/documents/subscriptions/$(request.auth.token.email))
+      .data.type
+      == "C";
+    }
+  }
+}
