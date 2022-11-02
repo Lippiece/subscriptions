@@ -5,13 +5,14 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "test": "vitest --globals",
+    "test": "vitest --globals --watch",
     "serve": "webpack serve --mode development --open --hot",
     "build": "webpack --mode production",
     "publish": "npm run build && firebase deploy"
   },
   "devDependencies": {
-    "@adipiscing/image-slider": "^1.4.6"
+    "@adipiscing/image-slider": "^1.4.6",
+    "vitest": "^0.24.5"
   },
   "dependencies": {
     "@emotion/css": "^11.10.5",
