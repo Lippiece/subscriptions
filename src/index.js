@@ -42,21 +42,13 @@ document.body.classList.add( css`
       align-items    : center;
       justify-content: center;
 
-      input {
-        color: rgba(0, 0, 0, 0.8);
-
-        &#new-user-sub-length {
-          width: 3em;
-        }
-      }
-
-      select {
-        color: rgba(0, 0, 0, 0.8);
+      input#new-user-sub-length {
+        width: 3em;
       }
 
     }
 
-    button {
+    * {
       color: rgba(0, 0, 0, 0.8);
     }
   }` );
@@ -153,6 +145,7 @@ const renderAdminUI = () => {
 const subscriptionNotExpired = async() => {
 
   const auth = getAuth();
+
   // get "expires" value from user email document
   const firestore             = getFirestore();
   const userReference         = doc( firestore, "subscriptions", auth.currentUser.email );
@@ -196,16 +189,17 @@ const displayUserData = async() => {
   typesActions[ userType ]();
 
 };
+
 // list files from firestore
 const getFiles = async() => {
 
   const auth = getAuth();
-
   // get "type" value from user email document
   const firestore        = getFirestore();
   const userReference    = doc( firestore, "subscriptions", auth.currentUser.email );
   const userData         = await getDoc( userReference );
   const subscriptionType = userData.data().type;
+
   // get files from storage
   const storage       = getStorage();
   const pathReference = ref( storage, subscriptionType );
@@ -222,7 +216,6 @@ const getFiles = async() => {
   }
 
 };
-
 // list download links for files
 const getDownloadLinks = async() => {
 
@@ -255,7 +248,6 @@ const listLinks = links => {
   document.body.append( list );
 
 };
-
 // new user form for admin to create new user
 const createUser = async( email, password, length, type ) => {
 
