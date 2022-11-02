@@ -41,6 +41,23 @@ document.body.classList.add( css`
       flex-direction : column;
       align-items    : center;
       justify-content: center;
+
+      input {
+        color: rgba(0, 0, 0, 0.8);
+
+        &#new-user-sub-length {
+          width: 3em;
+        }
+      }
+
+      select {
+        color: rgba(0, 0, 0, 0.8);
+      }
+
+    }
+
+    button {
+      color: rgba(0, 0, 0, 0.8);
     }
   }` );
 const app           = initializeApp( getFirebaseConfig() );
@@ -49,9 +66,9 @@ loginForm.id        = "login-form";
 loginForm.innerHTML = `
   <label for="login-email">Email</label>
   <input type="email" id="login-email" autocomplete="login-email" />
-  <label for="login-password">Password</label>
+  <label for="login-password">Пароль</label>
   <input type="password" id="login-password" autocomplete="current-password" />
-  <button type="submit">Login</button>
+  <button type="submit">Войти</button>
 `;
 document.body.append( loginForm );
 
@@ -105,17 +122,17 @@ const renderAdminUI = () => {
   newUserForm.innerHTML = `
   <label for="new-user-email">Email</label>
   <input type="email" id="new-user-email" />
-  <label for="new-user-password">Password</label>
+  <label for="new-user-password">Пароль</label>
   <input type="password" id="new-user-password" />
-  <label for="new-user-sub-length">Subscription Length</label>
+  <label for="new-user-sub-length">Длительность подписки (мес.)</label>
   <input type="number" id="new-user-sub-length" />
-  <label for="new-user-sub-type">Subscription Type</label>
+  <label for="new-user-sub-type">Тип подписки</label>
   <select id="new-user-sub-type">
     <option value="A">A</option>
     <option value="B">B</option>
     <option value="C">C</option>
   </select>
-  <button type="submit">Create User</button>
+  <button type="submit">Зарегистрировать</button>
 `;
 
   newUserForm.addEventListener( "submit", event => {
@@ -136,7 +153,6 @@ const renderAdminUI = () => {
 const subscriptionNotExpired = async() => {
 
   const auth = getAuth();
-
   // get "expires" value from user email document
   const firestore             = getFirestore();
   const userReference         = doc( firestore, "subscriptions", auth.currentUser.email );
@@ -154,7 +170,7 @@ const displayUserData = async() => {
   const auth           = getAuth();
   const greeting       = document.createElement( "p" );
   greeting.id          = "greeting";
-  greeting.textContent = `Hello ${ auth.currentUser.email }!`;
+  greeting.textContent = `Здравствуйте, ${ auth.currentUser.email }!`;
   document.body.append( greeting );
 
   const userType     = await getUserType( auth.currentUser.email );
@@ -172,7 +188,7 @@ const displayUserData = async() => {
       console.log( "subscription expired" );
       const expiryParagraph       = document.createElement( "p" );
       expiryParagraph.id          = "subscription-expired";
-      expiryParagraph.textContent = "Your subscription has expired.";
+      expiryParagraph.textContent = "Ваша подписка истекла.";
       return document.body.append( expiryParagraph );
 
     },
@@ -180,17 +196,16 @@ const displayUserData = async() => {
   typesActions[ userType ]();
 
 };
-
 // list files from firestore
 const getFiles = async() => {
 
   const auth = getAuth();
+
   // get "type" value from user email document
   const firestore        = getFirestore();
   const userReference    = doc( firestore, "subscriptions", auth.currentUser.email );
   const userData         = await getDoc( userReference );
   const subscriptionType = userData.data().type;
-
   // get files from storage
   const storage       = getStorage();
   const pathReference = ref( storage, subscriptionType );
@@ -207,6 +222,7 @@ const getFiles = async() => {
   }
 
 };
+
 // list download links for files
 const getDownloadLinks = async() => {
 
@@ -239,6 +255,7 @@ const listLinks = links => {
   document.body.append( list );
 
 };
+
 // new user form for admin to create new user
 const createUser = async( email, password, length, type ) => {
 
