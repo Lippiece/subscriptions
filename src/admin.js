@@ -16,18 +16,31 @@ import {
 import { getFirebaseConfig } from "./firebase-config";
 import methods from "./methods";
 
-const app        = initializeApp( getFirebaseConfig() );
+const renderInfobox = () => {
+
+  const container = document.createElement( "div" );
+  container.id    = "info-container";
+  const paragraph = document.createElement( "p" );
+  paragraph.id    = "info-text";
+  container.append( paragraph );
+  return container;
+
+};
+const info     = renderInfobox();
+const infoText = info.querySelector( "#info-text" );
+const app      = initializeApp( getFirebaseConfig() );
+// eslint-disable-next-line @getify/proper-arrows/params
 const createUser = async( email, password, length, type ) => {
 
   const auth = getAuth();
   try {
 
     await createUserWithEmailAndPassword( auth, email, password );
-    await createSubscription( email, length, type );
+    return await createSubscription( email, length, type );
 
   } catch ( error ) {
 
-    console.error( error );
+    return infoText.textContent = methods.displayError( error );
 
   }
 
@@ -50,11 +63,11 @@ const createSubscription = async( email, length, type ) => {
       type,
     } );
 
-    document.body.append( "User created!" );
+    return document.body.append( "User created!" );
 
   } catch ( error ) {
 
-    console.error( error );
+    return infoText.textContent = methods.displayError( error );
 
   }
 
@@ -105,8 +118,7 @@ const getSubscriptions = async() => {
 
   } catch ( error ) {
 
-    console.log( error );
-    return error;
+    return infoText.textContent = methods.displayError( error );
 
   }
 
@@ -117,10 +129,10 @@ const listStyle           = css`
     padding: 0;
 
     li {
-      margin-bottom: 1rem;
+      margin-bottom: 1em;
 
       *:first-child {
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.5em;
         font-weight: bold;
       }
     }
@@ -159,7 +171,7 @@ const renderAdminUI = async() => {
 
   const newUserForm   = renderForm();
   const subscriptions = await renderSubscriptions();
-  document.body.replaceChildren( newUserForm, subscriptions );
+  document.body.replaceChildren( info, newUserForm, subscriptions );
 
 };
 

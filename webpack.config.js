@@ -25,19 +25,7 @@ export default {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      title: "Test",
-      templateContent: `
-	<!DOCTYPE html>
-    <html>
-			<head>
-		    <link rel="stylesheet" href="https://meyerweb.com/eric/tools/css/reset/reset.css">
-				<meta name="viewport" content="width=device-width, initial-scale=1">
-			</head>
-      <body>
-				<div id="content"></div>
-      </body>
-    </html>
-  `,
+      title: "Subscriptions",
     }),
   ],
   module: {

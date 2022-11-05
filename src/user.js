@@ -14,9 +14,12 @@ import {
 
 import methods from "./methods";
 
+const infoText = document.querySelector( "#info-text" );
+
 const getFiles = async() => {
 
   const auth = getAuth();
+
   // get "type" value from user email document
   const firestore        = getFirestore();
   const userReference    = doc( firestore, "subscriptions", auth.currentUser.email );
@@ -34,11 +37,12 @@ const getFiles = async() => {
 
   } catch ( error ) {
 
-    return console.error( error );
+    infoText.textContent = methods.displayError( error );
 
   }
 
 };
+
 // list download links for files
 const getDownloadLinks = async() => {
 
@@ -52,23 +56,31 @@ const getDownloadLinks = async() => {
 
   } catch ( error ) {
 
-    return console.error( error );
+    infoText.textContent = methods.displayError( error );
 
   }
 
 };
 const listLinks = links => {
 
-  const list = document.createElement( "ul" );
-  list.id    = "links-list";
+  const container  = document.createElement( "div" );
+  container.id     = "links-container";
+  const info       = document.createElement( "p" );
+  info.textContent = "Ссылки на файлы:";
+  const list       = document.createElement( "ul" );
   links.map( link => {
 
     const listItem     = document.createElement( "li" );
-    listItem.innerHTML = `<a href="${ link }">${ methods.getFileName( link ) }</a>`;
+    const anchor       = document.createElement( "a" );
+    anchor.href        = link;
+    anchor.textContent = methods.getFileName( link );
+    listItem.append( anchor );
     list.append( listItem );
 
   } );
-  return list;
+  container.append( info );
+  container.append( list );
+  return container;
 
 };
 const subscriptionNotExpired = async() => {
@@ -87,6 +99,35 @@ const subscriptionNotExpired = async() => {
   return subscriptionTimestamp > Date.now();
 
 };
+const listSubscriptionTypes = async() => {
+
+  // get the names of all folders in storage
+  const storage       = getStorage();
+  const reference     = ref( storage );
+  const listResult    = await listAll( reference );
+  const subscriptions = listResult.prefixes.map( folder =>
+    folder.name );
+
+  // DOM
+  const container = document.createElement( "div" );
+  const list      = document.createElement( "ul" );
+  list.id         = "subs-list";
+  subscriptions.map( sub => {
+
+    const listItem        = document.createElement( "li" );
+    const paragraph       = document.createElement( "p" );
+    paragraph.textContent = sub;
+    listItem.append( paragraph );
+    list.append( listItem );
+
+  } );
+  const info       = document.createElement( "p" );
+  info.textContent = "Доступные подписки:";
+  container.append( info );
+  container.append( list );
+  return container;
+
+};
 const renderUserUI = async() => {
 
   if ( await subscriptionNotExpired() ) {
@@ -95,10 +136,8 @@ const renderUserUI = async() => {
     return document.body.replaceChildren( listLinks( links ) );
 
   }
-  const expiryParagraph       = document.createElement( "p" );
-  expiryParagraph.id          = "subscription-expired";
-  expiryParagraph.textContent = "Ваша подписка истекла.";
-  return document.body.append( expiryParagraph );
+
+  return infoText.textContent = "Ваша подписка истекла";
 
 };
 export default renderUserUI;

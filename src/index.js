@@ -11,7 +11,7 @@ import {
 } from "firebase/firestore";
 
 import renderAdminUI from "./admin";
-import { getFirebaseConfig } from "./firebase-config.js";
+import methods from "./methods";
 import spinner from "./spinner";
 import renderUserUI from "./user";
 
@@ -23,9 +23,17 @@ document.body.classList.add( css`
     display         : flex;
     flex-direction  : column;
     align-items     : center;
-    justify-content : center;
     height          : 100vh;
     background-color: #222;
+
+    div#links-container {
+      display        : flex;
+      flex-direction : column;
+      align-items    : center;
+      justify-content: center;
+      gap            : 0.5em;
+
+    }
 
     form {
       display        : flex;
@@ -50,6 +58,8 @@ document.body.classList.add( css`
       color           : rgba(255, 255, 255, 0.7);
     }
   }` );
+document.body.append( methods.renderInfobox() );
+const infoText      = document.querySelector( "#info-text" );
 const loginForm     = document.createElement( "form" );
 loginForm.id        = "login-form";
 loginForm.innerHTML = `
@@ -71,6 +81,7 @@ loginForm.addEventListener( "submit", event => {
   login( email, password );
 
 } );
+
 const login = async( email, password ) => {
 
   const auth = getAuth();
@@ -82,7 +93,7 @@ const login = async( email, password ) => {
 
   } catch ( error ) {
 
-    console.error( error );
+    infoText.textContent = methods.displayError( error );
 
   }
 
