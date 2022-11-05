@@ -1,20 +1,22 @@
 /* eslint-disable fp/no-nil, fp/no-mutation, fp/no-unused-expression */
+import { css } from "@emotion/css";
 import { initializeApp } from "firebase/app";
 import {
   createUserWithEmailAndPassword,
   getAuth,
 } from "firebase/auth";
 import {
+  collection,
   doc,
+  getDocs,
   getFirestore,
   setDoc,
 } from "firebase/firestore";
 
 import { getFirebaseConfig } from "./firebase-config";
+import methods from "./methods";
 
-const app = initializeApp( getFirebaseConfig() );
-
-// new user form for admin to create new user
+const app        = initializeApp( getFirebaseConfig() );
 const createUser = async( email, password, length, type ) => {
 
   const auth = getAuth();
@@ -30,7 +32,7 @@ const createUser = async( email, password, length, type ) => {
   }
 
 };
-const addToDate = ( input, months ) => {
+const incrementDate = ( input, months ) => {
 
   const output = new Date( input );
   output.setMonth( output.getMonth() + months );
@@ -44,7 +46,7 @@ const createSubscription = async( email, length, type ) => {
   try {
 
     await setDoc( doc( database, "subscriptions", email ), {
-      expires: addToDate( Date.now(), Number( length ) ),
+      expires: incrementDate( Date.now(), Number( length ) ),
       type,
     } );
 
@@ -57,7 +59,7 @@ const createSubscription = async( email, length, type ) => {
   }
 
 };
-const renderAdminUI = () => {
+const renderForm = () => {
 
   const newUserForm     = document.createElement( "form" );
   newUserForm.id        = "new-user-form";
@@ -89,7 +91,75 @@ const renderAdminUI = () => {
     createUser( email, password, length, type );
 
   } );
-  document.body.replaceChildren( newUserForm );
+  return newUserForm;
+
+};
+const getSubscriptions = async() => {
+
+  const database = getFirestore( app );
+  try {
+
+    const snapshot = await getDocs( collection( database, "subscriptions" ) );
+    return await snapshot.docs.map( document_ =>
+      [ document_.id, document_.data() ] );
+
+  } catch ( error ) {
+
+    console.log( error );
+    return error;
+
+  }
+
+};
+const listStyle           = css`
+  & {
+    list-style: none;
+    padding: 0;
+
+    li {
+      margin-bottom: 1rem;
+
+      *:first-child {
+        margin-bottom: 0.5rem;
+        font-weight: bold;
+      }
+    }
+  }
+  `;
+const renderSubscriptions = async() => {
+
+  const subscriptions = document.createElement( "ul" );
+  subscriptions.id    = "subscriptions";
+  subscriptions.classList.add( listStyle );
+  const data = await getSubscriptions();
+  data.map( subscription => {
+
+    const item        = document.createElement( "li" );
+    const itemContent = [
+      subscription[ 0 ],
+      `Тип ${ subscription[ 1 ].type }`,
+      `Истекает: ${ methods.timestampToDate( subscription[ 1 ].expires ) }`,
+    ]
+      .map( item_ => {
+
+        const paragraph       = document.createElement( "p" );
+        paragraph.textContent = item_;
+        item.append( paragraph );
+        return paragraph;
+
+      } );
+    subscriptions.append( item );
+
+  } );
+
+  return subscriptions;
+
+};
+const renderAdminUI = async() => {
+
+  const newUserForm   = renderForm();
+  const subscriptions = await renderSubscriptions();
+  document.body.replaceChildren( newUserForm, subscriptions );
 
 };
 

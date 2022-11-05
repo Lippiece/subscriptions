@@ -27,3 +27,29 @@ describe( "getFileName", () => {
   } );
 
 } );
+
+describe( "timestampToDate", () => {
+
+  const { timestampToDate } = methods;
+  const testCases           = [
+    [
+      {
+        nanoseconds: 0,
+        seconds    : 1_675_327_778,
+      },
+      "02.02.2023",
+    ],
+  ];
+  // eslint-disable-next-line jest/require-hook
+  testCases.map( ( [ timestamp, expected ] ) => {
+
+    test( `timestampToDate(${ timestamp.seconds })`, () => {
+
+      expect( timestampToDate( timestamp ) )
+        .toBe( expected );
+
+    } );
+
+  } );
+
+} );

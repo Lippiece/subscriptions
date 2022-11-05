@@ -5,4 +5,11 @@ const getFileName = url => {
   return decodeURI( url.slice( start, end ) );
 
 };
-export default { getFileName };
+const timestampToDate = timestamp => {
+
+  const date = new Date( timestamp.seconds * 1000 );
+  return date.toLocaleString( "ru-RU" )
+    .split( "," )[ 0 ];
+
+};
+export default { getFileName, timestampToDate };
