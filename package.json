@@ -1,21 +1,21 @@
 {
   "name": "subscriptions",
-  "type": "module",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "test": "vitest --globals --watch",
-    "serve": "webpack serve --mode development --open --hot",
     "build": "webpack --mode production",
-    "publish": "npm run build && firebase deploy"
-  },
-  "devDependencies": {
-    "@adipiscing/image-slider": "^1.4.6",
-    "vitest": "^0.24.5"
+    "publish": "npm run build && firebase deploy",
+    "serve": "webpack serve --mode development --open --hot",
+    "test": "vitest --globals --watch"
   },
   "dependencies": {
     "@emotion/css": "^11.10.5",
     "firebase": "^9.12.1"
+  },
+  "devDependencies": {
+    "@adipiscing/image-slider": "^1.4.6",
+    "vitest": "^0.24.5"
   }
 }

@@ -10,9 +10,10 @@ import {
   getFirestore,
 } from "firebase/firestore";
 
-import renderAdminUI from "./admin.js";
+import renderAdminUI from "./admin";
 import { getFirebaseConfig } from "./firebase-config.js";
-import renderUserUI from "./user.js";
+import spinner from "./spinner";
+import renderUserUI from "./user";
 
 document.body.classList.add( css`
   & {
@@ -96,14 +97,13 @@ const getUserType = async email => {
       types[ key ] );
 
 };
-// list files from firestore
 const displayUserData = async() => {
 
   const auth           = getAuth();
   const greeting       = document.createElement( "p" );
   greeting.id          = "greeting";
   greeting.textContent = `Здравствуйте, ${ auth.currentUser.email }!`;
-  document.body.append( greeting );
+  document.body.replaceChildren( greeting, spinner  );
 
   const userType     = await getUserType( auth.currentUser.email );
   const typesActions = {

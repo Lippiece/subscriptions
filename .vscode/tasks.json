@@ -1,0 +1,55 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "serve",
+      "problemMatcher": [],
+      "label": "serve",
+      "detail": "webpack serve --mode development --hot",
+      "group": "build",
+      "presentation": {
+        "reveal"          : "silent",
+        "panel"           : "dedicated",
+        "clear"           : true,
+        "close"           : true,
+        "focus"           : false,
+        "showReuseMessage": true,
+        "echo"            : true,
+      },
+      "isBackground": true,
+      "icon": {
+        "id": "browser",
+        "color": "terminal.ansiGreen",
+      },
+      "runOptions": {
+        "runOn": "folderOpen",
+      }
+    },
+    {
+      "type": "npm",
+      "script": "test",
+      "group": "test",
+      "problemMatcher": [],
+      "label": "test",
+      "detail": "vitest --globals --watch",
+      "presentation": {
+        "reveal"          : "silent",
+        "panel"           : "dedicated",
+        "clear"           : true,
+        "close"           : true,
+        "focus"           : false,
+        "showReuseMessage": true,
+        "echo"            : true,
+      },
+      "isBackground": true,
+      "icon": {
+        "id": "check-all",
+        "color": "terminal.ansiGreen",
+      },
+      "runOptions": {
+        "runOn": "folderOpen",
+      }
+    }
+  ]
+}

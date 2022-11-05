@@ -10,9 +10,10 @@ import {
   setDoc,
 } from "firebase/firestore";
 
-import { getFirebaseConfig } from "./firebase-config.js";
+import { getFirebaseConfig } from "./firebase-config";
 
 const app = initializeApp( getFirebaseConfig() );
+
 // new user form for admin to create new user
 const createUser = async( email, password, length, type ) => {
 
