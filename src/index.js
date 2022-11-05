@@ -17,14 +17,15 @@ import renderUserUI from "./user";
 
 document.body.classList.add( css`
   & {
-    font-family    : 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    font-size      : 1.5em;
-    gap            : 1.5em;
-    display        : flex;
-    flex-direction : column;
-    align-items    : center;
-    justify-content: center;
-    height         : 100vh;
+    font-family     : 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size       : 1.5em;
+    gap             : 1.5em;
+    display         : flex;
+    flex-direction  : column;
+    align-items     : center;
+    justify-content : center;
+    height          : 100vh;
+    background-color: #222;
 
     form {
       display        : flex;
@@ -33,6 +34,11 @@ document.body.classList.add( css`
       align-items    : center;
       justify-content: center;
 
+      input {
+        background-color: #222;
+        color: rgba(255, 255, 255, 0.7)
+      }
+
       input#new-user-sub-length {
         width: 3em;
       }
@@ -40,7 +46,8 @@ document.body.classList.add( css`
     }
 
     * {
-      color: rgba(0, 0, 0, 0.8);
+      background-color: #222;
+      color           : rgba(255, 255, 255, 0.7);
     }
   }` );
 const loginForm     = document.createElement( "form" );
