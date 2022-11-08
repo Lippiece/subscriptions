@@ -1,6 +1,9 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+  	match /{all=**} {
+    	allow list: if request.auth != null;
+    }
     match /A/{resourceID} {
       allow read: if firestore.get(/databases/(default)/documents/subscriptions/$(request.auth.token.email))
       .data.type
