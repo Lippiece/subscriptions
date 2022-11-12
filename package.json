@@ -12,10 +12,12 @@
   },
   "dependencies": {
     "@emotion/css": "^11.10.5",
+    "@getify/eslint-plugin-proper-arrows": "^11.0.3",
     "firebase": "^9.12.1"
   },
   "devDependencies": {
     "@adipiscing/image-slider": "^1.4.6",
+    "jsdom": "^20.0.2",
     "vitest": "^0.24.5"
   }
 }

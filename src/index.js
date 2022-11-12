@@ -2,12 +2,12 @@
 import { css } from "@emotion/css";
 import {
   getAuth,
-  signInWithEmailAndPassword,
+  signInWithEmailAndPassword
 } from "firebase/auth";
 import {
   doc,
   getDoc,
-  getFirestore,
+  getFirestore
 } from "firebase/firestore";
 
 import renderAdminUI from "./admin";
@@ -15,7 +15,7 @@ import methods from "./methods";
 import spinner from "./spinner";
 import renderUserUI from "./user";
 
-document.body.classList.add( css`
+document.body.classList.add ( css`
   & {
     font-family     : 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size       : 1.5em;
@@ -58,9 +58,9 @@ document.body.classList.add( css`
       color           : rgba(255, 255, 255, 0.7);
     }
   }` );
-document.body.append( methods.renderInfobox() );
-const infoText      = document.querySelector( "#info-text" );
-const loginForm     = document.createElement( "form" );
+document.body.append ( methods.renderInfobox () );
+const infoText      = document.querySelector ( "#info-text" );
+const loginForm     = document.createElement ( "form" );
 loginForm.id        = "login-form";
 loginForm.innerHTML = `
   <label for="login-email">Email</label>
@@ -69,65 +69,85 @@ loginForm.innerHTML = `
   <input type="password" id="login-password" autocomplete="current-password" />
   <button type="submit">Войти</button>
 `;
-document.body.append( loginForm );
+document.body.append ( loginForm );
 
-loginForm.addEventListener( "submit", event => {
+const getUserType = async ( email ) => {
 
-  event.preventDefault();
+  const database            = getFirestore ();
+  const adminReference      = doc (
+    database,
+    "admins",
+    email
+  );
+  const subscriberReference = doc (
+    database,
+    "subscriptions",
+    email
+  );
+  const adminData           = await getDoc ( adminReference );
+  const subscriberData      = await getDoc ( subscriberReference );
+  const types               = {
+    "admin": adminData.data (),
+    "sub"  : subscriberData.data ()
+  };
 
-  const email    = loginForm[ "login-email" ].value;
-  const password = loginForm[ "login-password" ].value;
+  return Object.keys ( types ).
+    find ( ( key ) => types[ key ] );
 
-  login( email, password );
+};
 
-} );
+const displayUserData = async () => {
 
-const login = async( email, password ) => {
+  const auth           = getAuth ();
+  const greeting       = document.createElement ( "p" );
+  greeting.id          = "greeting";
+  greeting.textContent = `Здравствуйте, ${ auth.currentUser.email }!`;
+  document.body.replaceChildren (
+    greeting,
+    spinner
+  );
 
-  const auth = getAuth();
+  const userType     = await getUserType ( auth.currentUser.email );
+  const typesActions = {
+    "admin": renderAdminUI,
+    "sub"  : renderUserUI
+  };
+  typesActions[ userType ] ();
+
+};
+const login = async ( email, password ) => {
+
+  const auth = getAuth ();
 
   try {
 
-    await signInWithEmailAndPassword( auth, email, password );
-    await displayUserData();
+    await signInWithEmailAndPassword (
+      auth,
+      email,
+      password
+    );
+    await displayUserData ();
 
   } catch ( error ) {
 
-    infoText.textContent = methods.displayError( error );
+    infoText.textContent = methods.displayError ( error );
 
   }
 
 };
-const getUserType = async email => {
+loginForm.addEventListener (
+  "submit",
+  ( event ) => {
 
-  const database            = getFirestore();
-  const adminReference      = doc( database, "admins", email );
-  const subscriberReference = doc( database, "subscriptions", email );
-  const adminData           = await getDoc( adminReference );
-  const subscriberData      = await getDoc( subscriberReference );
-  const types               = {
-    admin: adminData.data(),
-    sub  : subscriberData.data(),
-  };
+    event.preventDefault ();
 
-  return Object.keys( types )
-    .find( key =>
-      types[ key ] );
+    const email    = loginForm[ "login-email" ].value;
+    const password = loginForm[ "login-password" ].value;
 
-};
-const displayUserData = async() => {
+    login (
+      email,
+      password
+    );
 
-  const auth           = getAuth();
-  const greeting       = document.createElement( "p" );
-  greeting.id          = "greeting";
-  greeting.textContent = `Здравствуйте, ${ auth.currentUser.email }!`;
-  document.body.replaceChildren( greeting, spinner  );
-
-  const userType     = await getUserType( auth.currentUser.email );
-  const typesActions = {
-    admin: renderAdminUI,
-    sub  : renderUserUI,
-  };
-  typesActions[ userType ]();
-
-};
+  }
+);

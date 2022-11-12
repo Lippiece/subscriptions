@@ -8,6 +8,7 @@ import {
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   getFirestore,
   setDoc,
@@ -15,6 +16,7 @@ import {
 
 import { getFirebaseConfig } from "./firebase-config";
 import methods from "./methods";
+import { addTestButton } from "./testing";
 
 const renderInfobox = () => {
 
@@ -26,17 +28,18 @@ const renderInfobox = () => {
   return container;
 
 };
-const info     = renderInfobox();
-const infoText = info.querySelector( "#info-text" );
-const app      = initializeApp( getFirebaseConfig() );
-// eslint-disable-next-line @getify/proper-arrows/params
-const createUser = async( email, password, length, type ) => {
+const info               = renderInfobox();
+const infoText           = info.querySelector( "#info-text" );
+const app                = initializeApp( getFirebaseConfig() );
+const getSubscription    = async ( email, database ) => {
 
-  const auth = getAuth();
   try {
 
-    await createUserWithEmailAndPassword( auth, email, password );
-    return await createSubscription( email, length, type );
+    return await getDoc( doc(
+      database,
+      "subscriptions",
+      email,
+    ) );
 
   } catch ( error ) {
 
@@ -45,25 +48,59 @@ const createUser = async( email, password, length, type ) => {
   }
 
 };
-const incrementDate = ( input, months ) => {
-
-  const output = new Date( input );
-  output.setMonth( output.getMonth() + months );
-  return output;
-
-};
-const createSubscription = async( email, length, type ) => {
+const createSubscription = async ( email, length, type ) => {
 
   const database = getFirestore( app );
 
+  const expires = methods.dateToTimestamp(
+    methods.incrementDate(
+      new Date(),
+      length,
+    ),
+  );
+  // first get the current subscription
+  const currentSubscription = await getSubscription(
+    email,
+    database,
+  );
   try {
 
-    await setDoc( doc( database, "subscriptions", email ), {
-      expires: incrementDate( Date.now(), Number( length ) ),
-      type,
-    } );
+    return currentSubscription?.data().type === type
+      ? infoText.textContent = "Подписка уже существует"
+      : await setDoc(
+        doc(
+          database,
+          "subscriptions",
+          email,
+        ),
+        {
+          expires,
+          type: `${ currentSubscription?.data().type }, ${ type }`,
+        },
+      );
 
-    return document.body.append( "User created!" );
+  } catch ( error ) {
+
+    return infoText.textContent = methods.displayError( error );
+
+  }
+
+};
+const createUser = async ( email, password, length, type ) => {
+
+  const auth = getAuth();
+  try {
+
+    await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password,
+    );
+    return createSubscription(
+      email,
+      length,
+      type,
+    );
 
   } catch ( error ) {
 
@@ -92,29 +129,42 @@ const renderForm = () => {
   <button type="submit">Зарегистрировать</button>
 `;
 
-  newUserForm.addEventListener( "submit", event => {
+  newUserForm.addEventListener(
+    "submit",
+    ( event ) => {
 
-    event.preventDefault();
+      event.preventDefault();
 
-    const email    = newUserForm[ "new-user-email" ].value;
-    const password = newUserForm[ "new-user-password" ].value;
-    const length   = newUserForm[ "new-user-sub-length" ].value;
-    const type     = newUserForm[ "new-user-sub-type" ].value;
+      const email    = newUserForm[ "new-user-email" ].value;
+      const password = newUserForm[ "new-user-password" ].value;
+      const length   = newUserForm[ "new-user-sub-length" ].value;
+      const type     = newUserForm[ "new-user-sub-type" ].value;
 
-    createUser( email, password, length, type );
+      createUser(
+        email,
+        password,
+        length,
+        type,
+      );
 
-  } );
+    },
+  );
   return newUserForm;
 
 };
-const getSubscriptions = async() => {
+const getSubscriptions = async () => {
 
   const database = getFirestore( app );
   try {
 
-    const snapshot = await getDocs( collection( database, "subscriptions" ) );
-    return await snapshot.docs.map( document_ =>
-      [ document_.id, document_.data() ] );
+    const snapshot = await getDocs( collection(
+      database,
+      "subscriptions",
+    ) );
+    return snapshot.docs.map( ( document_ ) => [
+      document_.id,
+      document_.data(),
+    ] );
 
   } catch ( error ) {
 
@@ -169,23 +219,26 @@ const listStyle           = css`
   }
   }
   `;
-const renderSubscriptions = async() => {
+const renderSubscriptions = async () => {
 
   const subscriptions = document.createElement( "ul" );
   subscriptions.id    = "subscriptions";
   subscriptions.classList.add( listStyle );
   const data = await getSubscriptions();
-  data.map( subscription => {
+  data.map( ( subscription ) => {
 
-    const item             = document.createElement( "li" );
-    const [ email, data_ ] = subscription;
-    item.dataset.email     = email;
-    const itemContent      = [
+    const item         = document.createElement( "li" );
+    const [
+      email,
+      data_,
+    ] = subscription;
+    item.dataset.email = email;
+    const itemContent  = [
       email,
       `Истекает: ${ methods.timestampToDate( data_.expires ) }`,
       `Тип: ${ data_.type }`,
     ];
-    itemContent.map( item_ => {
+    itemContent.map( ( item_ ) => {
 
       const paragraph       = document.createElement( "p" );
       paragraph.textContent = item_;
@@ -202,18 +255,20 @@ const renderSubscriptions = async() => {
 };
 
 // Get subscription requests and return them as an array
-const getSubscriptionRequests = async() => {
+const getSubscriptionRequests = async () => {
 
   const database = getFirestore( app );
   try {
 
-    const snapshot = await getDocs( collection( database, "requests" ) );
-    return await snapshot.docs.map( document_ =>
-      ( {
-        length: document_.data().length,
-        type  : document_.data().type,
-        user  : document_.id,
-      } ) );
+    const snapshot = await getDocs( collection(
+      database,
+      "requests",
+    ) );
+    return snapshot.docs.map( ( document_ ) => ( {
+      length: document_.data().length,
+      type  : document_.data().type,
+      user  : document_.id,
+    } ) );
 
   } catch ( error ) {
 
@@ -223,24 +278,24 @@ const getSubscriptionRequests = async() => {
 
 };
 
-const fillForm = request =>
-  event => {
+const fillForm = ( request ) => ( event ) => {
 
-    event.preventDefault();
-    const form                          = document.querySelector( "#new-user-form" );
-    form[ "new-user-email" ].value      = request.user;
-    form[ "new-user-sub-length" ].value = request.length;
-    form[ "new-user-sub-type" ].value   = request.type;
-    form[ "new-user-password" ].value   = "password";
+  event.preventDefault();
+  const form = document.querySelector( "#new-user-form" );
 
-  };
+  form[ "new-user-email" ].value      = request.user;
+  form[ "new-user-sub-length" ].value = request.length;
+  form[ "new-user-sub-type" ].value   = request.type;
+  form[ "new-user-password" ].value   = "password";
+
+};
 
 /**
-* Render incoming requests
-* positioned to the right of the corresponding users
-* with button to accept which creates a subscription
-*/
-const renderRequest = request => {
+ * Render incoming requests
+ * positioned to the right of the corresponding users
+ * with button to accept which creates a subscription
+ */
+const renderRequest = ( request ) => {
 
   const requestContainer = document.createElement( "div" );
   requestContainer.classList.add( "request-container" );
@@ -251,7 +306,7 @@ const renderRequest = request => {
     `Срок: ${ request.length }`,
     `Тип: ${ request.type }`,
   ];
-  requestContent.map( item => {
+  requestContent.map( ( item ) => {
 
     const paragraph       = document.createElement( "p" );
     paragraph.textContent = item;
@@ -259,25 +314,33 @@ const renderRequest = request => {
     return paragraph;
 
   } );
-  acceptButton.addEventListener( "click", event =>
-    fillForm( request )( event ) );
+  acceptButton.addEventListener(
+    "click",
+    ( event ) => fillForm( request )( event ),
+  );
   document.querySelector( `li[data-email="${ request.user }"]` )
     .append( requestContainer );
 
 };
-const renderRequests = async() => {
+const renderRequests = async () => {
 
   const requests = await getSubscriptionRequests();
-  return requests.map( request =>
-    renderRequest( request ) );
+  return requests.map( ( request ) => renderRequest( request ) );
 
 };
-const renderAdminUI = async() => {
+const renderAdminUI = async () => {
 
-  const newUserForm   = renderForm();
-  const subscriptions = await renderSubscriptions();
-  document.body.replaceChildren( info, newUserForm, subscriptions );
-  const requests = await renderRequests();
+  /*
+   * const newUserForm   = renderForm();
+   * const subscriptions = await renderSubscriptions();
+   * document.body.replaceChildren(
+   *   info,
+   *   newUserForm,
+   *   subscriptions,
+   * );
+   * return renderRequests();
+   */
+  document.body.replaceChildren( addTestButton() );
 
 };
 export default renderAdminUI;
