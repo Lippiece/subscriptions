@@ -18,52 +18,46 @@ import methods from "./methods";
 const infobox  = methods.renderInfobox();
 const infoText = infobox.querySelector( "#info-text" );
 
-const getFiles = async() => {
+const handleUserSubscriptions = userData => Object.keys( userData.subs ).reduce(
+  ( acc, sub ) => {
 
-  const auth = getAuth();
+    if ( userData.subs[ sub ] ) {
 
-  // get "type" value from user email document
-  const firestore        = getFirestore();
-  const userReference    = doc( firestore, "subscriptions", auth.currentUser.email );
-  const userData         = await getDoc( userReference );
-  const subscriptionType = userData.data().type;
+      const paragraph       = document.createElement( "p" );
+      paragraph.textContent = `Подписка ${ sub } истекает ${ new Date( userData
+        .subs[ sub ].seconds * 1000 )
+        .toLocaleString( "ru" )
+        .split( "," )[ 0 ] }`;
+      acc.append( paragraph );
 
-  // get files from storage
+    }
+    return acc;
+
+  },
+  document.createElement( "div" ),
+);
+
+const getFilesLinksByType = async subscriptionType => {
+
   const storage       = getStorage();
-  const pathReference = ref( storage, subscriptionType );
+  const pathReference = ref(
+    storage,
+    subscriptionType,
+  );
 
-  try {
+  const listResult = await listAll( pathReference );
+  if ( !listResult.items.length ) {
 
-    const listResult = await listAll( pathReference );
-    return listResult.items;
-
-  } catch ( error ) {
-
-    return infoText.textContent = methods.displayError( error );
+    infoText.textContent = "Нет файлов для скачивания";
+    return;
 
   }
+  const links = listResult.items.map( item => item.fullPath );
+  return links.map( link => `https://firebasestorage.googleapis.com/v0/b/${ storage.bucket }/o/${ encodeURIComponent( link ) }?alt=media` );
 
 };
 
-// list download links for files
-const getDownloadLinks = async() => {
-
-  const files    = await getFiles();
-  const promises = files.map( file =>
-    getDownloadURL( ref( file ) )  );
-
-  try {
-
-    return await Promise.all( promises );
-
-  } catch ( error ) {
-
-    return infoText.textContent = methods.displayError( error );
-
-  }
-
-};
-const listLinks = links => {
+const renderLinks = links => {
 
   const container  = document.createElement( "div" );
   container.id     = "links-container";
@@ -85,30 +79,44 @@ const listLinks = links => {
   return container;
 
 };
-const subscriptionNotExpired = async() => {
+// list download links for files
+const listLinks = async data => {
 
-  const auth = getAuth();
+  const { subs } = data;
+  const links    = await Promise.all(
+    Object.keys( subs ).map( async sub => {
 
-  // get "expires" value from user email document
-  const firestore             = getFirestore();
-  const userReference         = doc( firestore, "subscriptions", auth.currentUser.email );
-  const userData              = await getDoc( userReference );
-  const subscriptionDate      = userData.data().expires.seconds;
-  const subscriptionTimestamp = new Date( subscriptionDate * 1000 )
-    .getTime();
+      if ( subs[ sub ] ) {
 
-  // check if subscription date is in the past
-  return subscriptionTimestamp > Date.now();
+        const links = await getFilesLinksByType( sub );
+        return links;
+
+      }
+
+    } ),
+  );
+  return renderLinks( links.flat() );
 
 };
-const listSubscriptionTypes = async() => {
+// gets userData with all subscriptions and returns true if any of them is active
+const subscriptionsNotExpired = data => {
+
+  const { subs } = data;
+  return Object.values( subs ).some( expires => {
+
+    const now = new Date();
+    return now < new Date( expires.seconds * 1000 );
+
+  } );
+
+};
+const listSubscriptionTypes = async () => {
 
   // get the names of all folders in storage
   const storage       = getStorage();
   const reference     = ref( storage );
   const listResult    = await listAll( reference );
-  const subscriptions = listResult.prefixes.map( folder =>
-    folder.name );
+  const subscriptions = listResult.prefixes.map( folder => folder.name );
 
   // DOM
   const container = document.createElement( "div" );
@@ -123,7 +131,12 @@ const listSubscriptionTypes = async() => {
     list.append( listItem );
 
   } );
-  const info       = document.createElement( "p" );
+  const info = document.createElement( "p" );
+  if ( subscriptions.length === 0 ) {
+
+    info.textContent = "Вы подписаны на все доступные подписки";
+
+  }
   info.textContent = "Доступные подписки:";
   container.append( info );
   container.append( list );
@@ -132,23 +145,30 @@ const listSubscriptionTypes = async() => {
 };
 
 /**
-* Create request to subscribe
-* to one of the available subscriptions
-* by creating a new document in the "requests" collection
-*/
-const requestSubscription = async( type, length ) => {
+ * Create request to subscribe
+ * to one of the available subscriptions
+ * by creating a new document in the "requests" collection
+ */
+const requestSubscription = async ( type, length ) => {
 
   const auth = getAuth();
 
   const firestore         = getFirestore();
-  const documentReference = doc( firestore, "requests", auth.currentUser.email );
+  const documentReference = doc(
+    firestore,
+    "requests",
+    auth.currentUser.email,
+  );
 
   try {
 
-    await setDoc( documentReference, {
-      length,
-      type,
-    } );
+    await setDoc(
+      documentReference,
+      {
+        length,
+        type,
+      },
+    );
     return infoText.textContent = "Запрос на подписку отправлен";
 
   } catch ( error ) {
@@ -181,25 +201,43 @@ const submitRequest = ( event, form ) => {
   const type           = form.querySelector( "#request-type" ).value;
   const length         = form.querySelector( "#request-length" ).value;
   infoText.textContent = "Отправка запроса...";
-  return requestSubscription( type, length );
+  return requestSubscription(
+    type,
+    length,
+  );
 
 };
-const renderRequestForm = async() => {
+const renderRequestForm = async () => {
 
-  const subs          = await listSubscriptionTypes();
+  const subs = await listSubscriptionTypes();
+  if ( subs.children.length === 0 ) {
+
+    const paragraph       = document.createElement( "p" );
+    paragraph.textContent = "Вы подписаны на все доступные подписки";
+    return paragraph;
+
+  }
   const form          = document.createElement( "form" );
   form.id             = "request-form";
   const typeSelector  = document.createElement( "select" );
   typeSelector.id     = "request-type";
   const subsList      = subs.querySelector( "#subs-list" );
-  const subsListItems = [ ...subsList.querySelectorAll( "li" ) ];
-  subsListItems.map( sub =>
-    renderSubscriptionOption( sub, typeSelector ) );
+  const subsListItems = [ ... subsList.querySelectorAll( "li" ) ];
+  subsListItems.map( sub => renderSubscriptionOption(
+    sub,
+    typeSelector,
+  ) );
   const lengthSelector = document.createElement( "select" );
   lengthSelector.id    = "request-length";
-  const options        = [ "1", "3", "6", "12" ];
-  options.map( option =>
-    renderLengthOption( option, lengthSelector ) );
+  const options        = [
+    "1",
+    "6",
+    "12",
+  ];
+  options.map( option => renderLengthOption(
+    option,
+    lengthSelector,
+  ) );
   const submit       = document.createElement( "button" );
   submit.id          = "request-submit";
   submit.type        = "submit";
@@ -208,20 +246,41 @@ const renderRequestForm = async() => {
   form.append( lengthSelector );
   form.append( submit );
 
-  form.addEventListener( "submit", event =>
-    submitRequest( event, form ) );
+  form.addEventListener(
+    "submit",
+    event => submitRequest(
+      event,
+      form,
+    ),
+  );
 
   return form;
 
 };
-const renderUserUI = async() => {
+const renderUserUI = async () => {
 
-  if ( await subscriptionNotExpired() ) {
+  const auth = getAuth();
 
-    const links = listLinks( await getDownloadLinks() );
-    const subs  = await listSubscriptionTypes();
-    const form  = await renderRequestForm();
-    return document.body.replaceChildren( infobox, links, subs, form );
+  // get "type" value from user email document
+  const firestore     = getFirestore();
+  const userReference = doc(
+    firestore,
+    "subscriptions",
+    auth.currentUser.email,
+  );
+  const document_     = await getDoc( userReference );
+
+  if ( subscriptionsNotExpired( document_.data() ) ) {
+
+    const links             = await listLinks( document_.data() );
+    const availables        = await renderRequestForm();
+    const subscriptionsInfo = handleUserSubscriptions( document_.data() );
+    return document.body.replaceChildren(
+      infobox,
+      links,
+      subscriptionsInfo,
+      availables,
+    );
 
   }
 

@@ -109,49 +109,6 @@ const createUser = async ( email, password, length, type ) => {
   }
 
 };
-const renderForm = () => {
-
-  const newUserForm     = document.createElement( "form" );
-  newUserForm.id        = "new-user-form";
-  newUserForm.innerHTML = `
-  <label for="new-user-email">Email</label>
-  <input type="email" id="new-user-email" />
-  <label for="new-user-password">Пароль</label>
-  <input type="password" id="new-user-password" />
-  <label for="new-user-sub-length">Длительность подписки (мес.)</label>
-  <input type="number" id="new-user-sub-length" />
-  <label for="new-user-sub-type">Тип подписки</label>
-  <select id="new-user-sub-type">
-    <option value="A">A</option>
-    <option value="B">B</option>
-    <option value="C">C</option>
-  </select>
-  <button type="submit">Зарегистрировать</button>
-`;
-
-  newUserForm.addEventListener(
-    "submit",
-    ( event ) => {
-
-      event.preventDefault();
-
-      const email    = newUserForm[ "new-user-email" ].value;
-      const password = newUserForm[ "new-user-password" ].value;
-      const length   = newUserForm[ "new-user-sub-length" ].value;
-      const type     = newUserForm[ "new-user-sub-type" ].value;
-
-      createUser(
-        email,
-        password,
-        length,
-        type,
-      );
-
-    },
-  );
-  return newUserForm;
-
-};
 const getSubscriptions = async () => {
 
   const database = getFirestore( app );
@@ -161,7 +118,7 @@ const getSubscriptions = async () => {
       database,
       "subscriptions",
     ) );
-    return snapshot.docs.map( ( document_ ) => [
+    return snapshot.docs.map( document_ => [
       document_.id,
       document_.data(),
     ] );
@@ -189,7 +146,7 @@ const listStyle           = css`
 
       *:first-child {
         margin-bottom: 0.5em;
-        font-weight: bold;
+        font-weight  : bold;
       }
     }
 
@@ -202,10 +159,10 @@ const listStyle           = css`
       align-items    : right;
 
       button {
-        border: 1px solid #ccc;
-        padding: 0.5em 1em;
+        border          : 1px solid #ccc;
+        padding         : 0.5em 1em;
         background-color: #222;
-        cursor: pointer;
+        cursor          : pointer;
 
         &:hover {
           background-color: #333;
@@ -225,7 +182,7 @@ const renderSubscriptions = async () => {
   subscriptions.id    = "subscriptions";
   subscriptions.classList.add( listStyle );
   const data = await getSubscriptions();
-  data.map( ( subscription ) => {
+  data.map( subscription => {
 
     const item         = document.createElement( "li" );
     const [
@@ -238,7 +195,7 @@ const renderSubscriptions = async () => {
       `Истекает: ${ methods.timestampToDate( data_.expires ) }`,
       `Тип: ${ data_.type }`,
     ];
-    itemContent.map( ( item_ ) => {
+    itemContent.map( item_ => {
 
       const paragraph       = document.createElement( "p" );
       paragraph.textContent = item_;
@@ -264,7 +221,7 @@ const getSubscriptionRequests = async () => {
       database,
       "requests",
     ) );
-    return snapshot.docs.map( ( document_ ) => ( {
+    return snapshot.docs.map( document_ => ( {
       length: document_.data().length,
       type  : document_.data().type,
       user  : document_.id,
@@ -277,70 +234,24 @@ const getSubscriptionRequests = async () => {
   }
 
 };
-
-const fillForm = ( request ) => ( event ) => {
-
-  event.preventDefault();
-  const form = document.querySelector( "#new-user-form" );
-
-  form[ "new-user-email" ].value      = request.user;
-  form[ "new-user-sub-length" ].value = request.length;
-  form[ "new-user-sub-type" ].value   = request.type;
-  form[ "new-user-password" ].value   = "password";
-
-};
-
-/**
- * Render incoming requests
- * positioned to the right of the corresponding users
- * with button to accept which creates a subscription
- */
-const renderRequest = ( request ) => {
-
-  const requestContainer = document.createElement( "div" );
-  requestContainer.classList.add( "request-container" );
-  const acceptButton = document.createElement( "button" );
-  requestContainer.append( acceptButton );
-  acceptButton.textContent = "Принять";
-  const requestContent     = [
-    `Срок: ${ request.length }`,
-    `Тип: ${ request.type }`,
-  ];
-  requestContent.map( ( item ) => {
-
-    const paragraph       = document.createElement( "p" );
-    paragraph.textContent = item;
-    requestContainer.append( paragraph );
-    return paragraph;
-
-  } );
-  acceptButton.addEventListener(
-    "click",
-    ( event ) => fillForm( request )( event ),
-  );
-  document.querySelector( `li[data-email="${ request.user }"]` )
-    .append( requestContainer );
-
-};
 const renderRequests = async () => {
 
-  const requests = await getSubscriptionRequests();
-  return requests.map( ( request ) => renderRequest( request ) );
+  const { renderRequest } = methods;
+  const requests          = await getSubscriptionRequests();
+  return requests.map( request => renderRequest( request ) );
 
 };
 const renderAdminUI = async () => {
 
-  /*
-   * const newUserForm   = renderForm();
-   * const subscriptions = await renderSubscriptions();
-   * document.body.replaceChildren(
-   *   info,
-   *   newUserForm,
-   *   subscriptions,
-   * );
-   * return renderRequests();
-   */
-  document.body.replaceChildren( addTestButton() );
+  const newUserForm   = methods.renderForm();
+  const subscriptions = await renderSubscriptions();
+  document.body.replaceChildren(
+    info,
+    newUserForm,
+    subscriptions,
+  );
+  return renderRequests();
 
 };
+
 export default renderAdminUI;

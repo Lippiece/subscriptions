@@ -9,26 +9,35 @@ import {
 
 import { getFirebaseConfig } from "./firebase-config";
 
-const app                 = initializeApp( getFirebaseConfig() );
-const database            = getFirestore( app );
+const app                    = initializeApp( getFirebaseConfig() );
+const database               = getFirestore( app );
+const testSubscriptionObject = ( type, expiry ) =>  (
+  { [ type ]: expiry  } );
+
 const addObjectToDatabase = async ( email, object ) => {
 
-  const document = doc(
+  const reference = doc(
     database,
     "subscriptions",
     email,
   );
-
+  const document  = await getDoc( reference );
+  const merged    = {
+    subs: {
+      ... document.data().subs,
+      ... object,
+    },
+  };
   try {
 
     await setDoc(
-      document,
-      { subs: object },
+      reference,
+      merged,
     );
 
   } catch ( error ) {
 
-    console.error( error );
+    console.error(  error );
 
   }
 
@@ -48,37 +57,47 @@ const getObjectFromDatabase = async ( collection, id ) => {
 
   } catch ( error ) {
 
-    console.error( error );
+    return console.error( error );
 
   }
 
 };
-const testSubscriptionObject = ( type, expiry ) => ( { type: expiry  } );
 
+const testMultipleSubscriptionsHandling = async () => {
+
+  const email  = "a@test.test";
+  const today  = new Date();
+  const expiry = new Date(
+    today.getFullYear(),
+    today.getMonth() + Math.floor( Math.random() * 10 ),
+    today.getDate(),
+  );
+  const object = testSubscriptionObject(
+    "A",
+    expiry,
+  );
+  await addObjectToDatabase(
+    email,
+    object,
+  );
+  const doc_ = await getObjectFromDatabase(
+    "subscriptions",
+    email,
+  );
+  console.log(
+    "doc_.data()",
+    doc_.data(),
+  );
+  return doc_.data();
+
+};
 export const addTestButton = () => {
 
   const button       = document.createElement( "button" );
   button.textContent = "Add test object";
   button.addEventListener(
     "click",
-    async () => {
-
-      const email  = "a@test.test";
-      const object = testSubscriptionObject(
-        "test",
-        new Date(),
-      );
-      await addObjectToDatabase(
-        email,
-        object,
-      );
-      const doc_ = await getObjectFromDatabase(
-        "subscriptions",
-        email,
-      );
-      console.log( doc_.data() );
-
-    },
+    testMultipleSubscriptionsHandling,
   );
 
   return button;

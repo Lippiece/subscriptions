@@ -2,12 +2,12 @@
 import { css } from "@emotion/css";
 import {
   getAuth,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
 } from "firebase/auth";
 import {
   doc,
   getDoc,
-  getFirestore
+  getFirestore,
 } from "firebase/firestore";
 
 import renderAdminUI from "./admin";
@@ -15,7 +15,7 @@ import methods from "./methods";
 import spinner from "./spinner";
 import renderUserUI from "./user";
 
-document.body.classList.add ( css`
+document.body.classList.add( css`
   & {
     font-family     : 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     font-size       : 1.5em;
@@ -58,9 +58,9 @@ document.body.classList.add ( css`
       color           : rgba(255, 255, 255, 0.7);
     }
   }` );
-document.body.append ( methods.renderInfobox () );
-const infoText      = document.querySelector ( "#info-text" );
-const loginForm     = document.createElement ( "form" );
+document.body.append( methods.renderInfobox() );
+const infoText      = document.querySelector( "#info-text" );
+const loginForm     = document.createElement( "form" );
 loginForm.id        = "login-form";
 loginForm.innerHTML = `
   <label for="login-email">Email</label>
@@ -69,85 +69,85 @@ loginForm.innerHTML = `
   <input type="password" id="login-password" autocomplete="current-password" />
   <button type="submit">Войти</button>
 `;
-document.body.append ( loginForm );
+document.body.append( loginForm );
 
-const getUserType = async ( email ) => {
+const getUserType = async email => {
 
-  const database            = getFirestore ();
-  const adminReference      = doc (
+  const database            = getFirestore();
+  const adminReference      = doc(
     database,
     "admins",
-    email
+    email,
   );
-  const subscriberReference = doc (
+  const subscriberReference = doc(
     database,
     "subscriptions",
-    email
+    email,
   );
-  const adminData           = await getDoc ( adminReference );
-  const subscriberData      = await getDoc ( subscriberReference );
+  const adminData           = await getDoc( adminReference );
+  const subscriberData      = await getDoc( subscriberReference );
   const types               = {
-    "admin": adminData.data (),
-    "sub"  : subscriberData.data ()
+    admin: adminData.data(),
+    sub  : subscriberData.data(),
   };
 
-  return Object.keys ( types ).
-    find ( ( key ) => types[ key ] );
+  return Object.keys( types )
+    .find( key => types[ key ] );
 
 };
 
 const displayUserData = async () => {
 
-  const auth           = getAuth ();
-  const greeting       = document.createElement ( "p" );
+  const auth           = getAuth();
+  const greeting       = document.createElement( "p" );
   greeting.id          = "greeting";
   greeting.textContent = `Здравствуйте, ${ auth.currentUser.email }!`;
-  document.body.replaceChildren (
+  document.body.replaceChildren(
     greeting,
-    spinner
+    spinner,
   );
 
-  const userType     = await getUserType ( auth.currentUser.email );
+  const userType     = await getUserType( auth.currentUser.email );
   const typesActions = {
-    "admin": renderAdminUI,
-    "sub"  : renderUserUI
+    admin: renderAdminUI,
+    sub  : renderUserUI,
   };
-  typesActions[ userType ] ();
+  typesActions[ userType ]();
 
 };
 const login = async ( email, password ) => {
 
-  const auth = getAuth ();
+  const auth = getAuth();
 
   try {
 
-    await signInWithEmailAndPassword (
+    await signInWithEmailAndPassword(
       auth,
       email,
-      password
+      password,
     );
-    await displayUserData ();
+    await displayUserData();
 
   } catch ( error ) {
 
-    infoText.textContent = methods.displayError ( error );
+    infoText.textContent = methods.displayError( error );
 
   }
 
 };
-loginForm.addEventListener (
+loginForm.addEventListener(
   "submit",
-  ( event ) => {
+  event => {
 
-    event.preventDefault ();
+    event.preventDefault();
 
     const email    = loginForm[ "login-email" ].value;
     const password = loginForm[ "login-password" ].value;
 
-    login (
+    login(
       email,
-      password
+      password,
     );
 
-  }
+  },
 );
