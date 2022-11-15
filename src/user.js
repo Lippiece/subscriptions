@@ -62,7 +62,7 @@ const renderLinks = links => {
   const container  = document.createElement( "div" );
   container.id     = "links-container";
   const info       = document.createElement( "p" );
-  info.textContent = "Ссылки на файлы:";
+  info.textContent = "Файлы из ваших подписок:";
   const list       = document.createElement( "ul" );
   links.map( link => {
 
@@ -86,7 +86,8 @@ const listLinks = async data => {
   const links    = await Promise.all(
     Object.keys( subs ).map( async sub => {
 
-      if ( subs[ sub ] ) {
+      // check if subscription is not expired and exists
+      if ( new Date() < new Date( subs?.[ sub ]?.seconds * 1000 ) ) {
 
         const links = await getFilesLinksByType( sub );
         return links;
@@ -95,7 +96,7 @@ const listLinks = async data => {
 
     } ),
   );
-  return renderLinks( links.flat() );
+  return renderLinks( links.flat().filter( link => Boolean( link ) ) );
 
 };
 // gets userData with all subscriptions and returns true if any of them is active

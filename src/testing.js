@@ -11,43 +11,13 @@ import { getFirebaseConfig } from "./firebase-config";
 
 const app                    = initializeApp( getFirebaseConfig() );
 const database               = getFirestore( app );
-const testSubscriptionObject = ( type, expiry ) =>  (
-  { [ type ]: expiry  } );
 
-const addObjectToDatabase = async ( email, object ) => {
-
-  const reference = doc(
-    database,
-    "subscriptions",
-    email,
-  );
-  const document  = await getDoc( reference );
-  const merged    = {
-    subs: {
-      ... document.data().subs,
-      ... object,
-    },
-  };
-  try {
-
-    await setDoc(
-      reference,
-      merged,
-    );
-
-  } catch ( error ) {
-
-    console.error(  error );
-
-  }
-
-};
-const getObjectFromDatabase = async ( collection, id ) => {
+const getObjectFromDatabase = async ( collection, email ) => {
 
   const document = doc(
     database,
     collection,
-    id,
+    email,
   );
 
   try {

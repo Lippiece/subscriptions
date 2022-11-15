@@ -1,3 +1,4 @@
+import { EmailAuthProvider, fetchSignInMethodsForEmail } from "firebase/auth";
 /* eslint-disable fp/no-mutation, fp/no-unused-expression */
 const fillForm = request => event => {
 
@@ -11,41 +12,51 @@ const fillForm = request => event => {
   return form;
 
 };
+const createSubscriptionObject = ( type, expiry ) =>  (
+  { [ type ]: expiry  } );
+const incrementDate            = ( date, length ) => {
 
-export default {
-  displayError: error =>  {
+  const output = new Date( date );
+  output.setMonth( output.getMonth() + length );
+  return output;
 
-    const { code, message } = error;
-    const errors            = {
-      "auth/account-exists-with-different-credential":
+};
+const displayError = error =>  {
+
+  const { code, message } = error;
+  const errors            = {
+    "auth/account-exists-with-different-credential":
         "Пользователь с таким email уже существует",
-      "auth/credential-already-in-use": "Учетные данные уже используются",
-      "auth/email-already-in-use"     : "Email уже используется",
-      "auth/invalid-credential"       : "Неверные учетные данные",
-      "auth/invalid-email"            : "Неверный email",
-      "auth/invalid-verification-code": "Неверный код подтверждения",
-      "auth/invalid-verification-id"  : "Неверный идентификатор подтверждения",
-      "auth/missing-verification-code": "Отсутствует код подтверждения",
-      "auth/missing-verification-id"  :
+    "auth/credential-already-in-use": "Учетные данные уже используются",
+    "auth/email-already-in-use"     : "Email уже используется",
+    "auth/invalid-credential"       : "Неверные учетные данные",
+    "auth/invalid-email"            : "Неверный email",
+    "auth/invalid-verification-code": "Неверный код подтверждения",
+    "auth/invalid-verification-id"  : "Неверный идентификатор подтверждения",
+    "auth/missing-verification-code": "Отсутствует код подтверждения",
+    "auth/missing-verification-id"  :
         "Отсутствует идентификатор подтверждения",
-      "auth/network-request-failed" : "Ошибка сети",
-      "auth/operation-not-allowed"  : "Операция не разрешена",
-      "auth/timeout"                : "Время ожидания истекло",
-      "auth/too-many-requests"      : "Слишком много запросов",
-      "auth/user-disabled"          : "Пользователь заблокирован",
-      "auth/user-not-found"         : "Пользователь не найден",
-      "auth/weak-password"          : "Слабый пароль",
-      "auth/wrong-password"         : "Неверный пароль",
-      "storage/canceled"            : "Загрузка отменена",
-      "storage/object-not-found"    : "Файл не найден",
-      "storage/quota-exceeded"      : "Превышен лимит хранилища",
-      "storage/retry-limit-exceeded": "Превышено количество попыток",
-      "storage/unauthorized"        : "Нет доступа",
-      "storage/unknown"             : "Неизвестная ошибка",
-    };
-    return errors[ code ] || message;
+    "auth/network-request-failed" : "Ошибка сети",
+    "auth/operation-not-allowed"  : "Операция не разрешена",
+    "auth/timeout"                : "Время ожидания истекло",
+    "auth/too-many-requests"      : "Слишком много запросов",
+    "auth/user-disabled"          : "Пользователь заблокирован",
+    "auth/user-not-found"         : "Пользователь не найден",
+    "auth/weak-password"          : "Слабый пароль",
+    "auth/wrong-password"         : "Неверный пароль",
+    "storage/canceled"            : "Загрузка отменена",
+    "storage/object-not-found"    : "Файл не найден",
+    "storage/quota-exceeded"      : "Превышен лимит хранилища",
+    "storage/retry-limit-exceeded": "Превышено количество попыток",
+    "storage/unauthorized"        : "Нет доступа",
+    "storage/unknown"             : "Неизвестная ошибка",
+  };
+  return errors[ code ] || message;
 
-  },
+};
+export default {
+  createSubscriptionObject,
+  displayError,
   fillForm,
   getFileName: url => {
 
@@ -57,50 +68,83 @@ export default {
     ) );
 
   },
-  incrementDate: ( input, months ) => {
-
-    const output = new Date( input );
-    output.setMonth( output.getMonth() + months );
-    return output;
-
-  },
-  renderForm: () => {
+  incrementDate,
+  renderForm: (
+    auth,
+    createUserWithEmailAndPassword,
+    addObjectToDatabase,
+  ) => {
 
     const newUserForm     = document.createElement( "form" );
     newUserForm.id        = "new-user-form";
     newUserForm.innerHTML = `
-  <label for="new-user-email">Email</label>
-  <input type="email" id="new-user-email" />
-  <label for="new-user-password">Пароль</label>
-  <input type="password" id="new-user-password" />
-  <label for="new-user-sub-length">Длительность подписки (мес.)</label>
-  <input type="number" id="new-user-sub-length" />
-  <label for="new-user-sub-type">Тип подписки</label>
-  <select id="new-user-sub-type">
-    <option value="A">A</option>
-    <option value="B">B</option>
-    <option value="C">C</option>
-  </select>
-  <button type="submit">Зарегистрировать</button>
-`;
+      <label for="new-user-email">Email</label>
+      <input type="email" id="new-user-email" />
+      <label for="new-user-password">Пароль</label>
+      <input type="password" id="new-user-password" />
+      <label for="new-user-sub-length">Длительность подписки (мес.)</label>
+      <input type="number" id="new-user-sub-length" />
+      <label for="new-user-sub-type">Тип подписки</label>
+      <select id="new-user-sub-type">
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+      </select>
+      <button type="submit">Зарегистрировать</button>
+    `;
 
     newUserForm.addEventListener(
       "submit",
-      event => {
+      async event => {
 
         event.preventDefault();
 
         const email    = newUserForm[ "new-user-email" ].value;
         const password = newUserForm[ "new-user-password" ].value;
-        const length   = newUserForm[ "new-user-sub-length" ].value;
+        const length   = Number( newUserForm[ "new-user-sub-length" ].value );
         const type     = newUserForm[ "new-user-sub-type" ].value;
 
-        return createUser(
-          email,
-          password,
-          length,
-          type,
-        );
+        try {
+
+          // check if user exists
+          const signIn = await fetchSignInMethodsForEmail(
+            auth,
+            email,
+          );
+          if ( signIn.includes( "password" ) ) {
+
+            await addObjectToDatabase(
+              email,
+              createSubscriptionObject(
+                type,
+                incrementDate(
+                  new Date(),
+                  length,
+                ),
+              ),
+            );
+
+            const paragraph       = document.createElement( "p" );
+            paragraph.textContent = `${ type }: ${ incrementDate(
+              new Date(),
+              length,
+            ) }`;
+            return document.querySelector( `li[data-email="${ email }"]` )
+              .append( paragraph );
+
+          }
+
+          return await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password,
+          );
+
+        } catch ( error ) {
+
+          return document.querySelector( "#info-text" ).textContent = displayError( error );
+
+        }
 
       },
     );

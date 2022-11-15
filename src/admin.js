@@ -28,10 +28,12 @@ const renderInfobox = () => {
   return container;
 
 };
-const info               = renderInfobox();
-const infoText           = info.querySelector( "#info-text" );
-const app                = initializeApp( getFirebaseConfig() );
-const getSubscription    = async ( email, database ) => {
+const info             = renderInfobox();
+const infoText         = info.querySelector( "#info-text" );
+const app              = initializeApp( getFirebaseConfig() );
+const auth             = getAuth( app );
+const database         = getFirestore( app );
+const getSubscription  = async email => {
 
   try {
 
@@ -48,70 +50,8 @@ const getSubscription    = async ( email, database ) => {
   }
 
 };
-const createSubscription = async ( email, length, type ) => {
-
-  const database = getFirestore( app );
-
-  const expires = methods.dateToTimestamp(
-    methods.incrementDate(
-      new Date(),
-      length,
-    ),
-  );
-  // first get the current subscription
-  const currentSubscription = await getSubscription(
-    email,
-    database,
-  );
-  try {
-
-    return currentSubscription?.data().type === type
-      ? infoText.textContent = "Подписка уже существует"
-      : await setDoc(
-        doc(
-          database,
-          "subscriptions",
-          email,
-        ),
-        {
-          expires,
-          type: `${ currentSubscription?.data().type }, ${ type }`,
-        },
-      );
-
-  } catch ( error ) {
-
-    return infoText.textContent = methods.displayError( error );
-
-  }
-
-};
-const createUser = async ( email, password, length, type ) => {
-
-  const auth = getAuth();
-  try {
-
-    await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password,
-    );
-    return createSubscription(
-      email,
-      length,
-      type,
-    );
-
-  } catch ( error ) {
-
-    return infoText.textContent = methods.displayError( error );
-
-  }
-
-};
 const getSubscriptions = async () => {
 
-  const database = getFirestore( app );
   try {
 
     const snapshot = await getDocs( collection(
@@ -144,13 +84,15 @@ const listStyle           = css`
         margin-block-end  : 0;
       }
 
-      *:first-child {
-        margin-bottom: 0.5em;
-        font-weight  : bold;
+      div {
+        *:first-child {
+          margin-bottom: 0.5em;
+          font-weight  : bold;
+        }
       }
     }
 
-    div {
+    div.request-container {
       position       : absolute;
       top            : 0;
       right          : -5em;
@@ -190,19 +132,27 @@ const renderSubscriptions = async () => {
       data_,
     ] = subscription;
     item.dataset.email = email;
-    const itemContent  = [
-      email,
-      `Истекает: ${ methods.timestampToDate( data_.expires ) }`,
-      `Тип: ${ data_.type }`,
-    ];
-    itemContent.map( item_ => {
+    const itemContents = Object.entries( data_.subs ).reduce(
+      ( acc, [
+        key,
+        value,
+      ] ) => {
 
-      const paragraph       = document.createElement( "p" );
-      paragraph.textContent = item_;
-      item.append( paragraph );
-      return paragraph;
+        const subscriptionText       = document.createElement( "p" );
+        subscriptionText.textContent = `${ key }: ${ methods.timestampToDate( value ) }`;
+        acc.append(
+          subscriptionText,
+        );
+        return acc;
 
-    } );
+      },
+      document.createElement( "div" ),
+    );
+    const emailText       = document.createElement( "p" );
+    emailText.textContent = email;
+    itemContents.prepend( emailText );
+    itemContents.classList.add( "subscriptions-container" );
+    item.append( itemContents );
     subscriptions.append( item );
 
   } );
@@ -214,7 +164,6 @@ const renderSubscriptions = async () => {
 // Get subscription requests and return them as an array
 const getSubscriptionRequests = async () => {
 
-  const database = getFirestore( app );
   try {
 
     const snapshot = await getDocs( collection(
@@ -241,9 +190,45 @@ const renderRequests = async () => {
   return requests.map( request => renderRequest( request ) );
 
 };
+const addObjectToDatabase = async ( email, object ) => {
+
+  const reference = doc(
+    database,
+    "subscriptions",
+    email,
+  );
+  const document  = await getDoc( reference );
+  const merged    = {
+    subs: {
+      ... document.exists()
+        ? document.data().subs
+        : {},
+      ... object,
+    },
+  };
+  try {
+
+    await setDoc(
+      reference,
+      merged,
+    );
+
+    infoText.textContent = "Подписка успешно добавлена";
+
+  } catch ( error ) {
+
+    infoText.textContent = methods.displayError( error );
+
+  }
+
+};
 const renderAdminUI = async () => {
 
-  const newUserForm   = methods.renderForm();
+  const newUserForm   = methods.renderForm(
+    auth,
+    createUserWithEmailAndPassword,
+    addObjectToDatabase,
+  );
   const subscriptions = await renderSubscriptions();
   document.body.replaceChildren(
     info,

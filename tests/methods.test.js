@@ -2,9 +2,25 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 import methods from "../src/methods";
+
+const mockAddObjectToDatabase =  vi.fn( ( object ) => {
+
+  const document = getDoc( reference );
+  const merged   = {
+    subs: {
+      ... document.exists()
+        ? document.data().subs
+        : {},
+      ... object,
+    },
+  };
+
+  return { type: object };
+
+} );
 
 describe(
   "getFileName",
@@ -109,3 +125,13 @@ describe(
 
   },
 );
+
+describe(
+  "addObjectToDatabase",
+  () => {
+
+      const { addObjectToDatabase } = methods;
+      const testCases               = [
+        [
+          {"sub@test.test":}
+  })
