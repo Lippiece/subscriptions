@@ -1,19 +1,61 @@
-import { EmailAuthProvider, fetchSignInMethodsForEmail } from "firebase/auth";
+import { fetchSignInMethodsForEmail } from "firebase/auth";
 /* eslint-disable fp/no-mutation, fp/no-unused-expression */
-const fillForm = request => event => {
+const updateUser = async( event, newUserForm, auth, createUserWithEmailAndPassword, addObjectToDatabase ) => {
 
   event.preventDefault();
-  const form = document.querySelector( "#new-user-form" );
 
-  form[ "new-user-email" ].value      = request.user;
-  form[ "new-user-sub-length" ].value = request.length;
-  form[ "new-user-sub-type" ].value   = request.type;
-  form[ "new-user-password" ].value   = "password";
-  return form;
+  const email    = newUserForm[ "new-user-email" ].value;
+  const password = newUserForm[ "new-user-password" ].value;
+  const length   = Number( newUserForm[ "new-user-sub-length" ].value );
+  const type     = newUserForm[ "new-user-sub-type" ].value;
+
+  try {
+
+    // check if user exists
+    const signIn = await fetchSignInMethodsForEmail(
+      auth,
+      email
+    );
+    if ( signIn.includes( "password" ) ) {
+
+      return await updateSubscription( addObjectToDatabase, email, type, length );
+
+    }
+
+    await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    document.querySelector( "#new-user-form" )
+      .reset();
+    return document.querySelector( "#info-text" ).textContent = "Пользователь создан";
+
+  } catch ( error ) {
+
+    return document.querySelector( "#info-text" ).textContent = displayError( error );
+
+  }
 
 };
-const createSubscriptionObject = ( type, expiry ) =>  (
-  { [ type ]: expiry  } );
+
+const fillForm = request =>
+  event => {
+
+    event.preventDefault();
+    const form = document.querySelector( "#new-user-form" );
+
+    form[ "new-user-email" ].value      = request.user;
+    form[ "new-user-sub-length" ].value = request.length;
+    form[ "new-user-sub-type" ].value   = request.type;
+    form[ "new-user-password" ].value   = "password";
+    return form;
+
+  };
+const createSubscriptionObject = ( type, expiry ) =>
+  (
+    { [ type ]: expiry  } );
 const incrementDate            = ( date, length ) => {
 
   const output = new Date( date );
@@ -46,12 +88,76 @@ const displayError = error =>  {
     "auth/wrong-password"         : "Неверный пароль",
     "storage/canceled"            : "Загрузка отменена",
     "storage/object-not-found"    : "Файл не найден",
-    "storage/quota-exceeded"      : "Превышен лимит хранилища",
     "storage/retry-limit-exceeded": "Превышено количество попыток",
     "storage/unauthorized"        : "Нет доступа",
     "storage/unknown"             : "Неизвестная ошибка",
   };
   return errors[ code ] || message;
+
+};
+const updateSubscription = async( addObjectToDatabase, email, type, length ) => {
+
+  await addObjectToDatabase(
+    email,
+    createSubscriptionObject(
+      type,
+      incrementDate(
+        new Date(),
+        length
+      )
+    )
+  );
+
+  const expiry   = new Date(
+    incrementDate(
+      new Date(),
+      length
+    )
+  );
+  const infoText = document.querySelector(
+    "#info-text"
+  );
+  return infoText.textContent = `Подписка ${ type } на ${ length } мес. активирована до ${ expiry.toLocaleDateString() }`;
+
+};
+const renderRequestType = ( addObjectToDatabase, clearRequest, email, key, value ) => {
+
+  const container = document.createElement( "div" );
+  container.classList.add( "request" );
+  const buttonsContainer = document.createElement( "div" );
+  buttonsContainer.classList.add( "buttons" );
+
+  // accept button
+  const acceptButton       = document.createElement( "button" );
+  acceptButton.textContent = "Принять";
+  acceptButton.addEventListener(
+    "click",
+    _ =>
+      updateSubscription(
+        addObjectToDatabase,
+        email,
+        key,
+        value
+      )
+  );
+
+  // deny button
+  const denyButton       = document.createElement( "button" );
+  denyButton.textContent = "Отклонить";
+  denyButton.addEventListener(
+    "click",
+    _ => {
+
+      clearRequest( email, key );
+      return container.remove();
+
+    }
+  );
+  const paragraph       = document.createElement( "p" );
+  paragraph.textContent = `${ key }: ${ value } мес.`;
+  buttonsContainer.append( acceptButton, denyButton );
+  container.append( paragraph, buttonsContainer );
+  return container;
 
 };
 export default {
@@ -64,7 +170,7 @@ export default {
     const end   = url.indexOf( "?" );
     return decodeURI( url.slice(
       start,
-      end,
+      end
     ) );
 
   },
@@ -72,7 +178,7 @@ export default {
   renderForm: (
     auth,
     createUserWithEmailAndPassword,
-    addObjectToDatabase,
+    addObjectToDatabase
   ) => {
 
     const newUserForm     = document.createElement( "form" );
@@ -95,58 +201,8 @@ export default {
 
     newUserForm.addEventListener(
       "submit",
-      async event => {
-
-        event.preventDefault();
-
-        const email    = newUserForm[ "new-user-email" ].value;
-        const password = newUserForm[ "new-user-password" ].value;
-        const length   = Number( newUserForm[ "new-user-sub-length" ].value );
-        const type     = newUserForm[ "new-user-sub-type" ].value;
-
-        try {
-
-          // check if user exists
-          const signIn = await fetchSignInMethodsForEmail(
-            auth,
-            email,
-          );
-          if ( signIn.includes( "password" ) ) {
-
-            await addObjectToDatabase(
-              email,
-              createSubscriptionObject(
-                type,
-                incrementDate(
-                  new Date(),
-                  length,
-                ),
-              ),
-            );
-
-            const paragraph       = document.createElement( "p" );
-            paragraph.textContent = `${ type }: ${ incrementDate(
-              new Date(),
-              length,
-            ) }`;
-            return document.querySelector( `li[data-email="${ email }"]` )
-              .append( paragraph );
-
-          }
-
-          return await createUserWithEmailAndPassword(
-            auth,
-            email,
-            password,
-          );
-
-        } catch ( error ) {
-
-          return document.querySelector( "#info-text" ).textContent = displayError( error );
-
-        }
-
-      },
+      event =>
+        updateUser( event, newUserForm, auth, createUserWithEmailAndPassword, addObjectToDatabase )
     );
     return newUserForm;
 
@@ -168,37 +224,17 @@ export default {
    * positioned to the right of the corresponding users
    * with button to accept which fills the form
    */
-  renderRequest: request => {
+  renderRequest: ( request, clearRequest, addObjectToDatabase ) => {
 
     const requestContainer = document.createElement( "div" );
     requestContainer.classList.add( "request-container" );
-    const acceptButton = document.createElement( "button" );
-    requestContainer.append( acceptButton );
-    acceptButton.textContent = "Принять";
-    const requestContent     = [
-      `Срок: ${ request.length }`,
-      `Тип: ${ request.type }`,
-    ];
-    requestContent.map( item => {
-
-      const paragraph       = document.createElement( "p" );
-      paragraph.textContent = item;
-      requestContainer.append( paragraph );
-      return paragraph;
-
-    } );
-    acceptButton.addEventListener(
-      "click",
-      event => fillForm( request )( event ),
-    );
+    const requestContent = Object.entries( request.types )
+      .map( ( [ key, value ] ) =>
+        renderRequestType( addObjectToDatabase, clearRequest, request.user, key, Number( value ) ) );
+    requestContent.map( item =>
+      requestContainer.append( item ) );
     return document.querySelector( `li[data-email="${ request.user }"]` )
       .append( requestContainer );
-
-  },
-  setDocMock: ( doc, data ) => {
-
-    doc.data = () => data;
-    return doc;
 
   },
   timestampToDate: timestamp => {

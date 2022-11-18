@@ -7,11 +7,14 @@ import {
 } from "firebase/auth";
 import {
   collection,
+  deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
   getFirestore,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 import { getFirebaseConfig } from "./firebase-config";
@@ -40,31 +43,34 @@ const getSubscription  = async email => {
     return await getDoc( doc(
       database,
       "subscriptions",
-      email,
+      email
     ) );
 
   } catch ( error ) {
 
+    console.error( error );
     return infoText.textContent = methods.displayError( error );
 
   }
 
 };
-const getSubscriptions = async () => {
+const getSubscriptions = async() => {
 
   try {
 
     const snapshot = await getDocs( collection(
       database,
-      "subscriptions",
+      "subscriptions"
     ) );
-    return snapshot.docs.map( document_ => [
-      document_.id,
-      document_.data(),
-    ] );
+    return snapshot.docs.map( document_ =>
+      [
+        document_.id,
+        document_.data(),
+      ] );
 
   } catch ( error ) {
 
+    console.error( error );
     return infoText.textContent = methods.displayError( error );
 
   }
@@ -84,7 +90,7 @@ const listStyle           = css`
         margin-block-end  : 0;
       }
 
-      div {
+      .subscriptions-container {
         *:first-child {
           margin-bottom: 0.5em;
           font-weight  : bold;
@@ -93,12 +99,33 @@ const listStyle           = css`
     }
 
     div.request-container {
-      position       : absolute;
-      top            : 0;
-      right          : -5em;
-      display        : flex;
-      flex-direction : column;
-      align-items    : right;
+      position      : absolute;
+      top           : 0;
+      left          : 7em;
+      display       : flex;
+      flex-direction: column;
+      align-items   : right;
+
+      .request {
+        display       : flex;
+        gap           : 0.5em;
+        flex-direction: row;
+
+        p {
+          width: max-content;
+        }
+
+        button {
+          height: 3em;
+        }
+      }
+
+      .buttons {
+        position      : relative;
+        display       : flex;
+        flex-direction: row;
+        gap           : 0.1em;
+      }
 
       button {
         border          : 1px solid #ccc;
@@ -118,7 +145,7 @@ const listStyle           = css`
   }
   }
   `;
-const renderSubscriptions = async () => {
+const renderSubscriptions = async() => {
 
   const subscriptions = document.createElement( "ul" );
   subscriptions.id    = "subscriptions";
@@ -132,22 +159,23 @@ const renderSubscriptions = async () => {
       data_,
     ] = subscription;
     item.dataset.email = email;
-    const itemContents = Object.entries( data_.subs ).reduce(
-      ( acc, [
-        key,
-        value,
-      ] ) => {
+    const itemContents = Object.entries( data_.subs )
+      .reduce(
+        ( accumulator, [
+          key,
+          value,
+        ] ) => {
 
-        const subscriptionText       = document.createElement( "p" );
-        subscriptionText.textContent = `${ key }: ${ methods.timestampToDate( value ) }`;
-        acc.append(
-          subscriptionText,
-        );
-        return acc;
+          const subscriptionText       = document.createElement( "p" );
+          subscriptionText.textContent = `${ key }: ${ methods.timestampToDate( value ) }`;
+          accumulator.append(
+            subscriptionText
+          );
+          return accumulator;
 
-      },
-      document.createElement( "div" ),
-    );
+        },
+        document.createElement( "div" )
+      );
     const emailText       = document.createElement( "p" );
     emailText.textContent = email;
     itemContents.prepend( emailText );
@@ -162,81 +190,122 @@ const renderSubscriptions = async () => {
 };
 
 // Get subscription requests and return them as an array
-const getSubscriptionRequests = async () => {
+const getSubscriptionRequests = async() => {
 
   try {
 
     const snapshot = await getDocs( collection(
       database,
-      "requests",
+      "requests"
     ) );
-    return snapshot.docs.map( document_ => ( {
-      length: document_.data().length,
-      type  : document_.data().type,
-      user  : document_.id,
-    } ) );
+    return snapshot.docs.map( document_ =>
+      ( {
+        types: document_.data().subs,
+        user : document_.id,
+      } ) );
 
   } catch ( error ) {
 
+    console.error( error );
     return infoText.textContent = methods.displayError( error );
 
   }
 
 };
-const renderRequests = async () => {
+const renderRequests = async() => {
 
-  const { renderRequest } = methods;
-  const requests          = await getSubscriptionRequests();
-  return requests.map( request => renderRequest( request ) );
+  const requests = await getSubscriptionRequests();
+  return requests.map( request =>
+    methods.renderRequest( request, clearRequest,addObjectToDatabase ) );
 
 };
-const addObjectToDatabase = async ( email, object ) => {
+const addObjectToDatabase = async( email, object ) => {
 
   const reference = doc(
     database,
     "subscriptions",
-    email,
+    email
   );
   const document  = await getDoc( reference );
   const merged    = {
     subs: {
-      ... document.exists()
+      ...document.exists()
         ? document.data().subs
         : {},
-      ... object,
+      ...object,
     },
   };
   try {
 
     await setDoc(
       reference,
-      merged,
+      merged
     );
 
     infoText.textContent = "Подписка успешно добавлена";
 
   } catch ( error ) {
 
+    console.error( error );
     infoText.textContent = methods.displayError( error );
 
   }
 
 };
-const renderAdminUI = async () => {
+const renderAdminUI = async() => {
 
   const newUserForm   = methods.renderForm(
     auth,
     createUserWithEmailAndPassword,
-    addObjectToDatabase,
+    addObjectToDatabase
   );
   const subscriptions = await renderSubscriptions();
   document.body.replaceChildren(
     info,
     newUserForm,
-    subscriptions,
+    subscriptions
   );
   return renderRequests();
 
 };
+const clearRequest = async (email, key) => {
 
+  try {
+
+    // remove entry from subscriptions if no more types
+    const subscription = await getSubscription( request.user );
+    if ( Object.keys( subscription.data().subs ).length === 0 ) {
+
+      await deleteDoc(
+        doc(
+          database,
+          "subscriptions",
+          email
+        )
+      );
+
+      return infoText.textContent = "Подписка успешно удалена";
+
+    }
+
+    // remove entry containing type from requests
+    await updateDoc(
+      doc(
+        database,
+        "requests",
+        email
+      ),
+      { subs: { [ key ]: deleteField() } }
+    );
+
+    return infoText.textContent = "Запрос успешно удален";
+
+  } catch ( error ) {
+
+    console.error( error );
+    infoText.textContent = methods.displayError( error );
+
+  }
+
+};
 export default renderAdminUI;
