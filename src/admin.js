@@ -190,7 +190,7 @@ const renderSubscriptions = async() => {
 };
 
 // Get subscription requests and return them as an array
-const getSubscriptionRequests = async() => {
+export const getSubscriptionRequests = async() => {
 
   try {
 
@@ -216,7 +216,7 @@ const renderRequests = async() => {
 
   const requests = await getSubscriptionRequests();
   return requests.map( request =>
-    methods.renderRequest( request, clearRequest,addObjectToDatabase ) );
+    methods.renderRequest( request, clearRequest, addObjectToDatabase ) );
 
 };
 const addObjectToDatabase = async( email, object ) => {
@@ -268,7 +268,7 @@ const renderAdminUI = async() => {
   return renderRequests();
 
 };
-const clearRequest = async (email, key) => {
+const clearRequest = async( email, key ) => {
 
   try {
 

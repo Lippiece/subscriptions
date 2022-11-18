@@ -1,11 +1,13 @@
 /* eslint-disable fp/no-nil, fp/no-mutation, fp/no-unused-expression */
 import { getAuth } from "firebase/auth";
 import {
+  collection,
   doc,
   getDoc,
   getFirestore,
   setDoc,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import {
   getDownloadURL,
@@ -16,14 +18,8 @@ import {
 
 import methods from "./methods";
 
-const infobox  = methods.renderInfobox();
-const infoText = infobox.querySelector( "#info-text" );
-
-/**
- * It takes an object with a property called subs, which is an object with properties that are either
- * null or an object with a property called seconds, which is a number, and returns a div with a
- * paragraph for each property of subs that is not null
- */
+const infobox                 = methods.renderInfobox();
+const infoText                = infobox.querySelector( "#info-text" );
 const handleUserSubscriptions = userData => {
 
   if ( Object.keys( userData ).length === 0 ) return "";
@@ -201,6 +197,8 @@ const requestSubscription = async( type, length ) => {
         },
       } )
       : await setDoc( documentReference, { subs: { [ type ]: length } } );
+    document.querySelector( "#requests" )
+      .replaceWith( await renderRequestsToUser() );
     return infoText.textContent = "Запрос на подписку отправлен";
 
   } catch ( error ) {
@@ -292,6 +290,37 @@ const renderRequestForm = async() => {
   return form;
 
 };
+const renderRequestsToUser = async() => {
+
+  const auth = getAuth();
+
+  const firestore = getFirestore();
+  const document_ = await getDoc(
+    doc( firestore, "requests", auth.currentUser.email )
+  );
+  if ( !document_.exists() ) return "";
+
+  const container = document.createElement( "div" );
+  container.id    = "requests";
+  const list      = document.createElement( "ul" );
+  Object.entries( document_.data()
+    .subs )
+    .map( ( [ type, length ] ) => {
+
+      const listItem        = document.createElement( "li" );
+      const paragraph       = document.createElement( "p" );
+      paragraph.textContent = `${ type } на ${ length } месяцев`;
+      listItem.append( paragraph );
+      list.append( listItem );
+
+    } );
+  const info       = document.createElement( "p" );
+  info.textContent = "Ваши запросы:";
+  container.append( info );
+  container.append( list );
+  return container;
+
+};
 const renderUserUI = async() => {
 
   const auth = getAuth();
@@ -308,13 +337,14 @@ const renderUserUI = async() => {
   const links             = await listLinks( document_.data() );
   const subscriptionsInfo = handleUserSubscriptions( document_.data() );
   const availables        = await renderRequestForm();
+  const requests          = await renderRequestsToUser();
   return document.body.replaceChildren(
     infobox,
     links,
     subscriptionsInfo,
-    availables
+    availables,
+    requests
   );
 
 };
-
 export default renderUserUI;
