@@ -25,7 +25,9 @@ const handleUserSubscriptions = userData => {
   if ( Object.keys( userData ).length === 0 ) return "";
   return Object.keys( userData.subs )
     .reduce(
-      ( accumulator, sub ) => {
+      (
+        accumulator, sub
+      ) => {
 
         if ( userData.subs[ sub ] ) {
 
@@ -101,19 +103,17 @@ const listLinks = async data => {
 
   }
   const { subs } = data;
-  const links    = await Promise.all(
-    Object.keys( subs )
-      .map( async sub => {
+  const links    = await Promise.all( Object.keys( subs )
+    .map( async sub => {
 
-        // check if subscription is not expired and exists
-        if ( new Date() < new Date( subs?.[ sub ]?.seconds * 1000 ) ) {
+      // check if subscription is not expired and exists
+      if ( new Date() < new Date( subs?.[ sub ]?.seconds * 1000 ) ) {
 
-          return await getFilesLinksByType( sub );
+        return await getFilesLinksByType( sub );
 
-        }
+      }
 
-      } )
-  );
+    } ) );
   return renderLinks( links.flat()
     .filter( Boolean ) );
 
@@ -172,7 +172,9 @@ const listSubscriptionTypes = async() => {
  * to one of the available subscriptions
  * by creating a new document in the "requests" collection
  */
-const requestSubscription = async( type, length ) => {
+const requestSubscription = async(
+  type, length
+) => {
 
   const auth = getAuth();
 
@@ -189,14 +191,17 @@ const requestSubscription = async( type, length ) => {
        if document exists, add a field to the "subs" object */
     const document_ = await getDoc( documentReference );
     document_.exists()
-      ? await updateDoc( documentReference, {
-        subs: {
-          ...document_.data()
-            .subs,
+      ? await updateDoc(
+        documentReference,
+        {
+          ...document_.data(),
           [ type ]: length,
-        },
-      } )
-      : await setDoc( documentReference, { subs: { [ type ]: length } } );
+        }
+      )
+      : await setDoc(
+        documentReference,
+        { subs: { [ type ]: length } }
+      );
     document.querySelector( "#requests" )
       .replaceWith( await renderRequestsToUser() );
     return infoText.textContent = "Запрос на подписку отправлен";
@@ -209,7 +214,9 @@ const requestSubscription = async( type, length ) => {
 
 };
 
-const renderLengthOption = ( option, lengthSelector ) => {
+const renderLengthOption = (
+  option, lengthSelector
+) => {
 
   const optionElement       = document.createElement( "option" );
   optionElement.value       = option;
@@ -217,7 +224,9 @@ const renderLengthOption = ( option, lengthSelector ) => {
   lengthSelector.append( optionElement );
 
 };
-const renderSubscriptionOption = ( sub, typeSelector ) => {
+const renderSubscriptionOption = (
+  sub, typeSelector
+) => {
 
   const option       = document.createElement( "option" );
   option.value       = sub.textContent;
@@ -225,7 +234,9 @@ const renderSubscriptionOption = ( sub, typeSelector ) => {
   typeSelector.append( option );
 
 };
-const submitRequest = ( event, form ) => {
+const submitRequest = (
+  event, form
+) => {
 
   event.preventDefault();
   const type           = form.querySelector( "#request-type" ).value;
@@ -295,17 +306,21 @@ const renderRequestsToUser = async() => {
   const auth = getAuth();
 
   const firestore = getFirestore();
-  const document_ = await getDoc(
-    doc( firestore, "requests", auth.currentUser.email )
-  );
+  const document_ = await getDoc( doc(
+    firestore,
+    "requests",
+    auth.currentUser.email
+  ) );
   if ( !document_.exists() ) return "";
 
   const container = document.createElement( "div" );
   container.id    = "requests";
   const list      = document.createElement( "ul" );
-  Object.entries( document_.data()
-    .subs )
-    .map( ( [ type, length ] ) => {
+  Object.entries( document_.data() )
+    .map( ( [
+      type,
+      length,
+    ] ) => {
 
       const listItem        = document.createElement( "li" );
       const paragraph       = document.createElement( "p" );

@@ -99,8 +99,8 @@ const listStyle           = css`
     }
 
     div.request-container {
-      position      : absolute;
       top           : 0;
+      margin        : 0.2em;
       left          : 7em;
       display       : flex;
       flex-direction: column;
@@ -153,34 +153,33 @@ const renderSubscriptions = async() => {
   const data = await getSubscriptions();
   data.map( subscription => {
 
-    const item         = document.createElement( "li" );
+    const item            = document.createElement( "li" );
     const [
       email,
       data_,
     ] = subscription;
-    item.dataset.email = email;
-    const itemContents = Object.entries( data_.subs )
-      .reduce(
-        ( accumulator, [
+    item.dataset.email    = email;
+    const emailText       = document.createElement( "p" );
+    emailText.textContent = email;
+    const container       = document.createElement( "div" );
+    container.classList.add( "subscriptions-container" );
+    container.prepend( emailText );
+    if ( Object.keys( data_ ).length > 0 ) {
+
+      const itemContents = Object.entries( data_.subs )
+        .map( ( [
           key,
           value,
         ] ) => {
 
           const subscriptionText       = document.createElement( "p" );
           subscriptionText.textContent = `${ key }: ${ methods.timestampToDate( value ) }`;
-          accumulator.append(
-            subscriptionText
-          );
-          return accumulator;
+          container.append( subscriptionText );
 
-        },
-        document.createElement( "div" )
-      );
-    const emailText       = document.createElement( "p" );
-    emailText.textContent = email;
-    itemContents.prepend( emailText );
-    itemContents.classList.add( "subscriptions-container" );
-    item.append( itemContents );
+        } );
+
+    }
+    item.append( container );
     subscriptions.append( item );
 
   } );
@@ -200,7 +199,7 @@ export const getSubscriptionRequests = async() => {
     ) );
     return snapshot.docs.map( document_ =>
       ( {
-        types: document_.data().subs,
+        types: document_.data(),
         user : document_.id,
       } ) );
 
@@ -212,63 +211,9 @@ export const getSubscriptionRequests = async() => {
   }
 
 };
-const renderRequests = async() => {
-
-  const requests = await getSubscriptionRequests();
-  return requests.map( request =>
-    methods.renderRequest( request, clearRequest, addObjectToDatabase ) );
-
-};
-const addObjectToDatabase = async( email, object ) => {
-
-  const reference = doc(
-    database,
-    "subscriptions",
-    email
-  );
-  const document  = await getDoc( reference );
-  const merged    = {
-    subs: {
-      ...document.exists()
-        ? document.data().subs
-        : {},
-      ...object,
-    },
-  };
-  try {
-
-    await setDoc(
-      reference,
-      merged
-    );
-
-    infoText.textContent = "Подписка успешно добавлена";
-
-  } catch ( error ) {
-
-    console.error( error );
-    infoText.textContent = methods.displayError( error );
-
-  }
-
-};
-const renderAdminUI = async() => {
-
-  const newUserForm   = methods.renderForm(
-    auth,
-    createUserWithEmailAndPassword,
-    addObjectToDatabase
-  );
-  const subscriptions = await renderSubscriptions();
-  document.body.replaceChildren(
-    info,
-    newUserForm,
-    subscriptions
-  );
-  return renderRequests();
-
-};
-const clearRequest = async( email, key ) => {
+const clearRequest = async(
+  email, key
+) => {
 
   try {
 
@@ -276,13 +221,11 @@ const clearRequest = async( email, key ) => {
     const subscription = await getSubscription( request.user );
     if ( Object.keys( subscription.data().subs ).length === 0 ) {
 
-      await deleteDoc(
-        doc(
-          database,
-          "subscriptions",
-          email
-        )
-      );
+      await deleteDoc( doc(
+        database,
+        "subscriptions",
+        email
+      ) );
 
       return infoText.textContent = "Подписка успешно удалена";
 
@@ -306,6 +249,66 @@ const clearRequest = async( email, key ) => {
     infoText.textContent = methods.displayError( error );
 
   }
+
+};
+const renderRequests = async() => {
+
+  const requests = await getSubscriptionRequests();
+  return requests.map( request =>
+    methods.renderRequest(
+      request,
+      clearRequest,
+      addObjectToDatabase
+    ) );
+
+};
+const addObjectToDatabase = async(
+  email, object
+) => {
+
+  const reference = doc(
+    database,
+    "subscriptions",
+    email
+  );
+  const document  = await getDoc( reference );
+  const merged    = {
+    subs: {
+      ...document.exists()
+        ? document.data().subs
+        : {},
+      ...object,
+    },
+  };
+  try {
+
+    return await setDoc(
+      reference,
+      merged
+    );
+
+  } catch ( error ) {
+
+    console.error( error );
+    return infoText.textContent = methods.displayError( error );
+
+  }
+
+};
+const renderAdminUI = async() => {
+
+  const newUserForm   = methods.renderForm(
+    auth,
+    createUserWithEmailAndPassword,
+    addObjectToDatabase
+  );
+  const subscriptions = await renderSubscriptions();
+  document.body.replaceChildren(
+    info,
+    newUserForm,
+    subscriptions
+  );
+  return renderRequests();
 
 };
 export default renderAdminUI;

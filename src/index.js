@@ -77,12 +77,12 @@ const getUserType = async email => {
   const adminReference      = doc(
     database,
     "admins",
-    email,
+    email
   );
   const subscriberReference = doc(
     database,
     "subscriptions",
-    email,
+    email
   );
   const adminData           = await getDoc( adminReference );
   const subscriberData      = await getDoc( subscriberReference );
@@ -92,19 +92,19 @@ const getUserType = async email => {
   };
 
   return Object.keys( types )
-    .find( key => types[ key ] );
+    .find( key =>
+      types[ key ] );
 
 };
 
-const displayUserData = async () => {
+const displayUserData = async() => {
 
   const auth           = getAuth();
   const greeting       = document.createElement( "p" );
-  greeting.id          = "greeting";
   greeting.textContent = `Здравствуйте, ${ auth.currentUser.email }!`;
   document.body.replaceChildren(
     greeting,
-    spinner,
+    spinner
   );
 
   const userType     = await getUserType( auth.currentUser.email );
@@ -115,7 +115,9 @@ const displayUserData = async () => {
   typesActions[ userType ]();
 
 };
-const login = async ( email, password ) => {
+const login = async(
+  email, password
+) => {
 
   const auth = getAuth();
 
@@ -124,7 +126,7 @@ const login = async ( email, password ) => {
     await signInWithEmailAndPassword(
       auth,
       email,
-      password,
+      password
     );
     await displayUserData();
 
@@ -146,8 +148,8 @@ loginForm.addEventListener(
 
     login(
       email,
-      password,
+      password
     );
 
-  },
+  }
 );

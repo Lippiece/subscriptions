@@ -1,6 +1,14 @@
+import { initializeApp } from "firebase/app";
 import { fetchSignInMethodsForEmail } from "firebase/auth";
+import { deleteField, doc, getDoc, getFirestore, updateDoc } from "firebase/firestore";
+
+import renderAdminUI from "./admin";
+import { getFirebaseConfig } from "./firebase-config";
 /* eslint-disable fp/no-mutation, fp/no-unused-expression */
-const updateUser = async( event, newUserForm, auth, createUserWithEmailAndPassword, addObjectToDatabase ) => {
+const app        = initializeApp( getFirebaseConfig() );
+const updateUser = async(
+  event, newUserForm, auth, createUserWithEmailAndPassword, addObjectToDatabase
+) => {
 
   event.preventDefault();
 
@@ -18,7 +26,12 @@ const updateUser = async( event, newUserForm, auth, createUserWithEmailAndPasswo
     );
     if ( signIn.includes( "password" ) ) {
 
-      return await updateSubscription( addObjectToDatabase, email, type, length );
+      return await updateSubscription(
+        addObjectToDatabase,
+        email,
+        type,
+        length
+      );
 
     }
 
@@ -53,10 +66,14 @@ const fillForm = request =>
     return form;
 
   };
-const createSubscriptionObject = ( type, expiry ) =>
+const createSubscriptionObject = (
+  type, expiry
+) =>
   (
     { [ type ]: expiry  } );
-const incrementDate            = ( date, length ) => {
+const incrementDate            = (
+  date, length
+) => {
 
   const output = new Date( date );
   output.setMonth( output.getMonth() + length );
@@ -95,7 +112,9 @@ const displayError = error =>  {
   return errors[ code ] || message;
 
 };
-const updateSubscription = async( addObjectToDatabase, email, type, length ) => {
+const updateSubscription = async(
+  addObjectToDatabase, email, type, length
+) => {
 
   await addObjectToDatabase(
     email,
@@ -108,19 +127,28 @@ const updateSubscription = async( addObjectToDatabase, email, type, length ) => 
     )
   );
 
-  const expiry   = new Date(
-    incrementDate(
-      new Date(),
-      length
-    )
+  // get doc with user requests
+  const database  = getFirestore( app );
+  const document_ =  doc(
+    database,
+    "requests",
+    email
   );
-  const infoText = document.querySelector(
-    "#info-text"
+
+  const replaced = await updateDoc(
+    document_,
+    {  [ type ]: deleteField()  }
   );
-  return infoText.textContent = `Подписка ${ type } на ${ length } мес. активирована до ${ expiry.toLocaleDateString() }`;
+  const expiry   = new Date( incrementDate(
+    new Date(),
+    length
+  ) );
+  return `Подписка ${ type } на ${ length } мес. активирована до ${ expiry.toLocaleDateString() }`;
 
 };
-const renderRequestType = ( addObjectToDatabase, clearRequest, email, key, value ) => {
+const renderRequestType = (
+  addObjectToDatabase, clearRequest, email, key, value
+) => {
 
   const container = document.createElement( "div" );
   container.classList.add( "request" );
@@ -132,13 +160,18 @@ const renderRequestType = ( addObjectToDatabase, clearRequest, email, key, value
   acceptButton.textContent = "Принять";
   acceptButton.addEventListener(
     "click",
-    _ =>
-      updateSubscription(
+    async event => {
+
+      const success = await updateSubscription(
         addObjectToDatabase,
         email,
         key,
         value
-      )
+      );
+      renderAdminUI();
+      return document.querySelector( "#info-text" ).textContent = success;
+
+    }
   );
 
   // deny button
@@ -148,15 +181,24 @@ const renderRequestType = ( addObjectToDatabase, clearRequest, email, key, value
     "click",
     _ => {
 
-      clearRequest( email, key );
+      clearRequest(
+        email,
+        key
+      );
       return container.remove();
 
     }
   );
   const paragraph       = document.createElement( "p" );
   paragraph.textContent = `${ key }: ${ value } мес.`;
-  buttonsContainer.append( acceptButton, denyButton );
-  container.append( paragraph, buttonsContainer );
+  buttonsContainer.append(
+    acceptButton,
+    denyButton
+  );
+  container.append(
+    paragraph,
+    buttonsContainer
+  );
   return container;
 
 };
@@ -202,7 +244,13 @@ export default {
     newUserForm.addEventListener(
       "submit",
       event =>
-        updateUser( event, newUserForm, auth, createUserWithEmailAndPassword, addObjectToDatabase )
+        updateUser(
+          event,
+          newUserForm,
+          auth,
+          createUserWithEmailAndPassword,
+          addObjectToDatabase
+        )
     );
     return newUserForm;
 
@@ -224,17 +272,28 @@ export default {
    * positioned to the right of the corresponding users
    * with button to accept which fills the form
    */
-  renderRequest: ( request, clearRequest, addObjectToDatabase ) => {
+  renderRequest: (
+    request, clearRequest, addObjectToDatabase
+  ) => {
 
     const requestContainer = document.createElement( "div" );
     requestContainer.classList.add( "request-container" );
     const requestContent = Object.entries( request.types )
-      .map( ( [ key, value ] ) =>
-        renderRequestType( addObjectToDatabase, clearRequest, request.user, key, Number( value ) ) );
+      .map( ( [
+        key,
+        value,
+      ] ) =>
+        renderRequestType(
+          addObjectToDatabase,
+          clearRequest,
+          request.user,
+          key,
+          Number( value )
+        ) );
     requestContent.map( item =>
       requestContainer.append( item ) );
     return document.querySelector( `li[data-email="${ request.user }"]` )
-      .append( requestContainer );
+      ?.append( requestContainer );
 
   },
   timestampToDate: timestamp => {
