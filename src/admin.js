@@ -19,8 +19,6 @@ import {
 
 import { getFirebaseConfig } from "./firebase-config";
 import methods from "./methods";
-import { addTestButton } from "./testing";
-
 const renderInfobox = () => {
 
   const container = document.createElement( "div" );
@@ -36,24 +34,6 @@ const infoText         = info.querySelector( "#info-text" );
 const app              = initializeApp( getFirebaseConfig() );
 const auth             = getAuth( app );
 const database         = getFirestore( app );
-const getSubscription  = async email => {
-
-  try {
-
-    return await getDoc( doc(
-      database,
-      "subscriptions",
-      email
-    ) );
-
-  } catch ( error ) {
-
-    console.error( error );
-    return infoText.textContent = methods.displayError( error );
-
-  }
-
-};
 const getSubscriptions = async() => {
 
   try {
@@ -211,53 +191,12 @@ export const getSubscriptionRequests = async() => {
   }
 
 };
-const clearRequest = async(
-  email, key
-) => {
-
-  try {
-
-    // remove entry from subscriptions if no more types
-    const subscription = await getSubscription( request.user );
-    if ( Object.keys( subscription.data().subs ).length === 0 ) {
-
-      await deleteDoc( doc(
-        database,
-        "subscriptions",
-        email
-      ) );
-
-      return infoText.textContent = "Подписка успешно удалена";
-
-    }
-
-    // remove entry containing type from requests
-    await updateDoc(
-      doc(
-        database,
-        "requests",
-        email
-      ),
-      { subs: { [ key ]: deleteField() } }
-    );
-
-    return infoText.textContent = "Запрос успешно удален";
-
-  } catch ( error ) {
-
-    console.error( error );
-    infoText.textContent = methods.displayError( error );
-
-  }
-
-};
 const renderRequests = async() => {
 
   const requests = await getSubscriptionRequests();
   return requests.map( request =>
     methods.renderRequest(
       request,
-      clearRequest,
       addObjectToDatabase
     ) );
 

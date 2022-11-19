@@ -1,11 +1,59 @@
+/* eslint-disable fp/no-mutation, fp/no-unused-expression,fp/no-nil */
 import { initializeApp } from "firebase/app";
 import { fetchSignInMethodsForEmail } from "firebase/auth";
 import { deleteField, doc, getDoc, getFirestore, updateDoc } from "firebase/firestore";
 
 import renderAdminUI from "./admin";
 import { getFirebaseConfig } from "./firebase-config";
-/* eslint-disable fp/no-mutation, fp/no-unused-expression */
-const app        = initializeApp( getFirebaseConfig() );
+
+const app             = initializeApp( getFirebaseConfig() );
+const database        = getFirestore( app );
+const getSubscription = async email => {
+
+  try {
+
+    return await getDoc( doc(
+      database,
+      "subscriptions",
+      email
+    ) );
+
+  } catch ( error ) {
+
+    console.error( error );
+    return infoText.textContent = methods.displayError( error );
+
+  }
+
+};
+
+const clearRequest = async(
+  email, key
+) => {
+
+  try {
+
+    const subscription = await getSubscription( email );
+
+    // remove entry containing type from requests
+    return await updateDoc(
+      doc(
+        database,
+        "requests",
+        email
+      ),
+      { [ key ]: deleteField() }
+    );
+
+  } catch ( error ) {
+
+    console.error( error );
+    return infoText.textContent = methods.displayError( error );
+
+  }
+
+};
+
 const updateUser = async(
   event, newUserForm, auth, createUserWithEmailAndPassword, addObjectToDatabase
 ) => {
@@ -147,7 +195,7 @@ const updateSubscription = async(
 
 };
 const renderRequestType = (
-  addObjectToDatabase, clearRequest, email, key, value
+  addObjectToDatabase, email, key, value
 ) => {
 
   const container = document.createElement( "div" );
@@ -273,7 +321,7 @@ export default {
    * with button to accept which fills the form
    */
   renderRequest: (
-    request, clearRequest, addObjectToDatabase
+    request, addObjectToDatabase
   ) => {
 
     const requestContainer = document.createElement( "div" );
@@ -285,7 +333,6 @@ export default {
       ] ) =>
         renderRequestType(
           addObjectToDatabase,
-          clearRequest,
           request.user,
           key,
           Number( value )
