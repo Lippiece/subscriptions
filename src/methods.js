@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 import { fetchSignInMethodsForEmail } from "firebase/auth";
 import { deleteField, doc, getDoc, getFirestore, updateDoc } from "firebase/firestore";
 
-import renderAdminUI from "./admin";
+import { renderSubscriptions } from "./admin";
 import { getFirebaseConfig } from "./firebase-config";
 
 const app             = initializeApp( getFirebaseConfig() );
@@ -72,26 +72,34 @@ const updateUser = async(
       auth,
       email
     );
-    if ( signIn.includes( "password" ) ) {
+    await updateSubscription(
+      addObjectToDatabase,
+      email,
+      type,
+      length
+    );
 
-      return await updateSubscription(
-        addObjectToDatabase,
+    if ( !signIn.includes( "password" ) ) {
+
+      await createUserWithEmailAndPassword(
+        auth,
         email,
-        type,
-        length
+        password
       );
+
+      return document.querySelector( "#info-text" ).textContent = "Пользователь создан";
 
     }
 
-    await createUserWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-
     document.querySelector( "#new-user-form" )
       .reset();
-    return document.querySelector( "#info-text" ).textContent = "Пользователь создан";
+    const expiry = new Date( incrementDate(
+      new Date(),
+      length
+    ) );
+    document.querySelector( "#subscriptions" )
+      .replaceWith( await renderSubscriptions() );
+    return document.querySelector( "#info-text" ).textContent = `Подписка ${ type } на ${ length } мес. активирована до ${ expiry.toLocaleDateString() }`;
 
   } catch ( error ) {
 
@@ -176,22 +184,22 @@ const updateSubscription = async(
   );
 
   // get doc with user requests
-  const database  = getFirestore( app );
-  const document_ =  doc(
+  const database         = getFirestore( app );
+  const reference        = doc(
     database,
     "requests",
     email
   );
+  const documentSnapshot = await getDoc( reference );
 
-  const replaced = await updateDoc(
-    document_,
-    {  [ type ]: deleteField()  }
-  );
-  const expiry   = new Date( incrementDate(
-    new Date(),
-    length
-  ) );
-  return `Подписка ${ type } на ${ length } мес. активирована до ${ expiry.toLocaleDateString() }`;
+  if ( documentSnapshot.exists() ) {
+
+    return await updateDoc(
+      reference,
+      {  [ type ]: deleteField()  }
+    );
+
+  }
 
 };
 const renderRequestType = (

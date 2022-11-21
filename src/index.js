@@ -10,7 +10,7 @@ import {
   getFirestore,
 } from "firebase/firestore";
 
-import renderAdminUI from "./admin";
+import { renderAdminUI } from "./admin";
 import methods from "./methods";
 import spinner from "./spinner";
 import renderUserUI from "./user";

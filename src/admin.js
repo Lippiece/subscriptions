@@ -125,7 +125,7 @@ const listStyle           = css`
   }
   }
   `;
-const renderSubscriptions = async() => {
+export const renderSubscriptions = async() => {
 
   const subscriptions = document.createElement( "ul" );
   subscriptions.id    = "subscriptions";
@@ -234,7 +234,7 @@ const addObjectToDatabase = async(
   }
 
 };
-const renderAdminUI = async() => {
+export const renderAdminUI = async() => {
 
   const newUserForm   = methods.renderForm(
     auth,
@@ -250,4 +250,3 @@ const renderAdminUI = async() => {
   return renderRequests();
 
 };
-export default renderAdminUI;
