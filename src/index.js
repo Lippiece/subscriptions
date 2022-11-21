@@ -33,6 +33,15 @@ document.body.classList.add( css`
       justify-content: center;
       gap            : 0.5em;
 
+      ul {
+        display        : flex;
+        flex-direction : column;
+        align-items    : center;
+        justify-content: center;
+        gap            : 0.5em;
+        list-style     : none;
+        padding        : 0;
+      }
     }
 
     form {
@@ -43,8 +52,16 @@ document.body.classList.add( css`
       justify-content: center;
 
       input {
+        outline         : none;
         background-color: #222;
-        color: rgba(255, 255, 255, 0.7)
+        color           : rgba(255, 255, 255, 0.7);
+        border          : 1px solid rgba(255, 255, 255, 0.7);
+        padding         : 0.5em 1em;
+
+        &:focus {
+          outline     : none;
+          border-color: #fff;
+        }
       }
 
       input#new-user-sub-length {
@@ -56,6 +73,37 @@ document.body.classList.add( css`
     * {
       background-color: #222;
       color           : rgba(255, 255, 255, 0.7);
+    }
+
+    p[data-expired="true"] {
+      color: rgba(255, 90, 90, 0.7);
+    }
+
+    p[data-expired="false"] {
+      color: rgba(90, 255, 90, 0.7);
+    }
+
+    button {
+      outline         : none;
+      background-color: #222;
+      color           : rgba(255, 255, 255, 0.7);
+      border          : 1px solid rgba(255, 255, 255, 0.7);
+      padding         : 0.5em 1em;
+      cursor          : pointer;
+
+      &:hover {
+        background-color: #ccc;
+        color           : #222;
+
+        &:focus {
+          outline: none;
+
+          &:active {
+            background-color: #aaa;
+            color           : #222;
+          }
+        }
+      }
     }
   }` );
 document.body.append( methods.renderInfobox() );

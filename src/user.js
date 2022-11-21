@@ -32,10 +32,18 @@ const handleUserSubscriptions = userData => {
         if ( userData.subs[ sub ] ) {
 
           const paragraph       = document.createElement( "p" );
-          paragraph.textContent = `Подписка ${ sub } истекает ${ new Date( userData
-            .subs[ sub ].seconds * 1000 )
+          const expires         = new Date( userData
+            .subs[ sub ].seconds * 1000 );
+          paragraph.textContent = `Подписка ${ sub } истекает ${ expires
             .toLocaleString( "ru" )
             .split( "," )[ 0 ] }`;
+
+          paragraph.dataset.expired = false;
+          if ( new Date() > expires ) {
+
+            paragraph.dataset.expired = true;
+
+          }
           accumulator.append( paragraph );
 
         }

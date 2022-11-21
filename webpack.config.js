@@ -26,6 +26,14 @@ export default {
   plugins: [
     new HtmlWebpackPlugin({
       title: "Subscriptions",
+      templateContent: `
+        <!DOCTYPE html>
+        <html lang="en">
+          <head>
+            <meta charset="utf-8" />
+            <title>Subscriptions</title>
+            <link rel="stylesheet" href="https://meyerweb.com/eric/tools/css/reset/reset.css" type="text/css" />
+          </head>`
     }),
   ],
   module: {
