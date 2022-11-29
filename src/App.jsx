@@ -3,17 +3,15 @@ import { css } from "@emotion/css";
 import {
   getAuth,
   signInWithEmailAndPassword,
+  signOut,
 } from "firebase/auth";
-import {
-  doc,
-  getDoc,
-  getFirestore,
-} from "firebase/firestore";
+import React from "react";
 
-import { renderAdminUI } from "./admin";
+import { AdminPanel } from "./components/AdminPanel";
+import LoginForm from "./components/LoginForm";
+import UserPanel from "./components/UserPanel";
 import methods from "./methods";
 import spinner from "./spinner";
-import renderUserUI from "./user";
 
 document.body.classList.add( css`
   & {
@@ -106,98 +104,68 @@ document.body.classList.add( css`
       }
     }
   }` );
-document.body.append( methods.renderInfobox() );
-const infoText      = document.querySelector( "#info-text" );
-const loginForm     = document.createElement( "form" );
-loginForm.id        = "login-form";
-loginForm.innerHTML = `
+const App = () => {
+
+  const [
+    user,
+    setUser,
+  ] = React.useState( "" );
+
+  return (
+    <div className="App">
+      <ExitButton user={user} />
+      <LoginForm user={user} setUser={setUser} />
+    </div>
+  );
+
+};
+
+const makeForm = () => {
+
+  const loginForm     = document.createElement( "form" );
+  loginForm.id        = "login-form";
+  loginForm.innerHTML = `
   <label for="login-email">Email</label>
   <input type="email" id="login-email" autocomplete="login-email" />
   <label for="login-password">Пароль</label>
   <input type="password" id="login-password" autocomplete="current-password" />
   <button type="submit">Войти</button>
 `;
-document.body.append( loginForm );
+  document.body.append( loginForm );
+  loginForm.addEventListener(
+    "submit",
+    event => {
 
-const getUserType = async email => {
+      event.preventDefault();
 
-  const database            = getFirestore();
-  const adminReference      = doc(
-    database,
-    "admins",
-    email
+      const email    = loginForm[ "login-email" ].value;
+      const password = loginForm[ "login-password" ].value;
+
+      login(
+        email,
+        password
+      );
+
+    }
   );
-  const subscriberReference = doc(
-    database,
-    "subscriptions",
-    email
-  );
-  const adminData           = await getDoc( adminReference );
-  const subscriberData      = await getDoc( subscriberReference );
-  const types               = {
-    admin: adminData.data(),
-    sub  : subscriberData.data(),
-  };
 
-  return Object.keys( types )
-    .find( key =>
-      types[ key ] );
+  return loginForm;
 
 };
-
-const displayUserData = async() => {
-
-  const auth           = getAuth();
-  const greeting       = document.createElement( "p" );
-  greeting.textContent = `Здравствуйте, ${ auth.currentUser.email }!`;
-  document.body.replaceChildren(
-    greeting,
-    spinner
-  );
-
-  const userType     = await getUserType( auth.currentUser.email );
-  const typesActions = {
-    admin: renderAdminUI,
-    sub  : renderUserUI,
-  };
-  typesActions[ userType ]();
-
-};
-const login = async(
-  email, password
-) => {
+const ExitButton = ({user}) => {
 
   const auth = getAuth();
 
-  try {
-
-    await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-    await displayUserData();
-
-  } catch ( error ) {
-
-    infoText.textContent = methods.displayError( error );
-
-  }
+  return (
+    <button
+      onClick={ () =>
+        signOut( auth ) }
+      className="exit-button"
+      hidden={!user}
+    >
+      Выйти
+    </button>
+  );
 
 };
-loginForm.addEventListener(
-  "submit",
-  event => {
-
-    event.preventDefault();
-
-    const email    = loginForm[ "login-email" ].value;
-    const password = loginForm[ "login-password" ].value;
-
-    login(
-      email,
-      password
-    );
-
-  }
-);
+export default App;

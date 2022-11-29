@@ -7,7 +7,7 @@ import {
 
 import {
   renderAdminUI, renderSubscriptions,
-} from "./admin";
+} from "./components/AdminPanel";
 import { getFirebaseConfig } from "./firebase-config";
 
 const app             = initializeApp( getFirebaseConfig() );
@@ -155,7 +155,7 @@ const displayError = error =>  {
     "auth/invalid-verification-code": "Неверный код подтверждения",
     "auth/invalid-verification-id"  : "Неверный идентификатор подтверждения",
     "auth/missing-verification-code": "Отсутствует код подтверждения",
-    "auth/missing-verification-id"  :
+    "auth/missing-verification-id":
         "Отсутствует идентификатор подтверждения",
     "auth/network-request-failed" : "Ошибка сети",
     "auth/operation-not-allowed"  : "Операция не разрешена",

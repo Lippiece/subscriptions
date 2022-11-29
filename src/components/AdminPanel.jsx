@@ -16,22 +16,23 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
+import React from "react";
 
-import { getFirebaseConfig } from "./firebase-config";
-import methods from "./methods";
+import { getFirebaseConfig } from "../firebase-config";
+import methods from "../methods";
 
-const renderInfobox = () => {
-
-  const container = document.createElement( "div" );
-  container.id    = "info-container";
-  const paragraph = document.createElement( "p" );
-  paragraph.id    = "info-text";
-  container.append( paragraph );
-  return container;
-
-};
-const info             = renderInfobox();
-const infoText         = info.querySelector( "#info-text" );
+const Infobox          = () =>
+  (
+    <div
+      id="info-container"
+    >
+      <p
+        id="info-text"
+      >
+        Admin
+      </p>
+    </div>
+  );
 const app              = initializeApp( getFirebaseConfig() );
 const auth             = getAuth( app );
 const database         = getFirestore( app );
@@ -249,3 +250,7 @@ export const renderAdminUI = async() => {
   return renderRequests();
 
 };
+export const AdminPanel = () =>
+  (
+    <Infobox />
+  );

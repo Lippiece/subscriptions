@@ -15,11 +15,22 @@ import {
   listAll,
   ref,
 } from "firebase/storage";
+import React from "react";
 
-import methods from "./methods";
+import methods from "../methods";
 
-const infobox                 = methods.renderInfobox();
-const infoText                = infobox.querySelector( "#info-text" );
+const Infobox                 = () =>
+  (
+    <div
+      id="info-container"
+    >
+      <p
+        id="info-text"
+      >
+        User
+      </p>
+    </div>
+  );
 const handleUserSubscriptions = userData => {
 
   if ( Object.keys( userData ).length === 0 ) return "";
@@ -370,4 +381,8 @@ const renderUserUI = async() => {
   );
 
 };
-export default renderUserUI;
+const UserPanel = () =>
+  (
+    <Infobox/>
+  );
+export default UserPanel;
