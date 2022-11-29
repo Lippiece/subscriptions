@@ -1,10 +1,14 @@
 {
   "testing.automaticallyOpenPeekView": "never",
   "task.allowAutomaticTasks": "on",
+  "autoHide.autoHidePanel": true,
   "workbench.colorCustomizations": {
+    "errorLens.errorBackground": "#e454541a",
+    "errorLens.errorForeground": "#e45454da",
+    "editorError.background": "#ffffff00",
+    "editorError.foreground": "#ff000000",
     "editor.lineHighlightBackground": "#1073cf2d",
     "editor.lineHighlightBorder": "#9fced11f",
-    "editorError.foreground": "#ff000088",
     "editorWarning.foreground": "#ffe60033",
     "editorInfo.foreground": "#00ff0088",
     "terminal.background": "#151515",
@@ -27,6 +31,5 @@
     "terminal.ansiRed": "#AC4142",
     "terminal.ansiWhite": "#D0D0D0",
     "terminal.ansiYellow": "#F4BF75"
-  },
-  "autoHide.autoHidePanel": true
+  }
 }

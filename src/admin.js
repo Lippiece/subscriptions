@@ -19,6 +19,7 @@ import {
 
 import { getFirebaseConfig } from "./firebase-config";
 import methods from "./methods";
+
 const renderInfobox = () => {
 
   const container = document.createElement( "div" );
@@ -56,7 +57,7 @@ const getSubscriptions = async() => {
   }
 
 };
-const listStyle           = css`
+const listStyle = css`
   & {
     list-style: none;
     padding   : 0;
@@ -211,14 +212,12 @@ const addObjectToDatabase = async(
     email
   );
   const document  = await getDoc( reference );
-  const merged    = {
-    subs: {
-      ...document.exists()
-        ? document.data().subs
-        : {},
-      ...object,
-    },
-  };
+  const merged    = { subs: {
+    ...document.exists()
+      ? document.data().subs
+      : {},
+    ...object,
+  } };
   try {
 
     return await setDoc(

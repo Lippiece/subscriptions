@@ -1,9 +1,13 @@
 /* eslint-disable fp/no-mutation, fp/no-unused-expression,fp/no-nil */
 import { initializeApp } from "firebase/app";
 import { fetchSignInMethodsForEmail } from "firebase/auth";
-import { deleteField, doc, getDoc, getFirestore, updateDoc } from "firebase/firestore";
+import {
+  deleteField, doc, getDoc, getFirestore, updateDoc,
+} from "firebase/firestore";
 
-import { renderSubscriptions } from "./admin";
+import {
+  renderAdminUI, renderSubscriptions,
+} from "./admin";
 import { getFirebaseConfig } from "./firebase-config";
 
 const app             = initializeApp( getFirebaseConfig() );
@@ -138,8 +142,10 @@ const incrementDate            = (
 };
 const displayError = error =>  {
 
-  const { code, message } = error;
-  const errors            = {
+  const {
+    code, message,
+  } = error;
+  const errors = {
     "auth/account-exists-with-different-credential":
         "Пользователь с таким email уже существует",
     "auth/credential-already-in-use": "Учетные данные уже используются",
@@ -182,6 +188,7 @@ const updateSubscription = async(
       )
     )
   );
+  renderAdminUI();
 
   // get doc with user requests
   const database         = getFirestore( app );
