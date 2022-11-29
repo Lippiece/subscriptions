@@ -8,7 +8,9 @@ import {
 import React from "react";
 
 import { AdminPanel } from "./components/AdminPanel";
-import LoginForm from "./components/LoginForm";
+import {
+  getUserType, LoginForm,
+} from "./components/LoginForm";
 import UserPanel from "./components/UserPanel";
 import methods from "./methods";
 import spinner from "./spinner";
@@ -111,55 +113,52 @@ const App = () => {
     setUser,
   ] = React.useState( "" );
 
+  // check if already logged in
+  React.useEffect(
+    () => {
+
+      const auth = getAuth();
+
+      auth.onAuthStateChanged( async authUser => {
+
+        if ( authUser ) {
+
+          const type = await getUserType( authUser.email );
+          setUser( type );
+
+        }
+
+      } );
+
+    },
+    []
+  );
+
   return (
     <div className="App">
-      <ExitButton user={user} />
-      <LoginForm user={user} setUser={setUser} />
+      <ExitButton user={user} setUser={setUser}/>
+      <LoginForm user={ user } setUser={ setUser } />
+      { user === "admin" && <AdminPanel /> }
+      { user === "user" && <UserPanel /> }
     </div>
   );
 
 };
 
-const makeForm = () => {
-
-  const loginForm     = document.createElement( "form" );
-  loginForm.id        = "login-form";
-  loginForm.innerHTML = `
-  <label for="login-email">Email</label>
-  <input type="email" id="login-email" autocomplete="login-email" />
-  <label for="login-password">Пароль</label>
-  <input type="password" id="login-password" autocomplete="current-password" />
-  <button type="submit">Войти</button>
-`;
-  document.body.append( loginForm );
-  loginForm.addEventListener(
-    "submit",
-    event => {
-
-      event.preventDefault();
-
-      const email    = loginForm[ "login-email" ].value;
-      const password = loginForm[ "login-password" ].value;
-
-      login(
-        email,
-        password
-      );
-
-    }
-  );
-
-  return loginForm;
-
-};
-const ExitButton = ({user}) => {
+const ExitButton = ( {
+  user, setUser,
+} ) => {
 
   const auth = getAuth();
 
   return (
     <button
-      onClick={ () =>
-        signOut( auth ) }
+      onClick={ () => {
+
+        setUser( "" );
+        signOut( auth );
+
+      } }
       className="exit-button"
       hidden={!user}
     >

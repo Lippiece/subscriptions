@@ -13,7 +13,7 @@ import {
 } from "firebase/firestore";
 import React from "react";
 
-const LoginForm = ( {
+export const LoginForm = ( {
   user, setUser,
 } ) => {
 
@@ -39,8 +39,6 @@ const LoginForm = ( {
       );
       const userType = await getUserType( email );
       setUser( userType );
-
-      // hide the form
 
     } catch ( error ) {
 
@@ -80,7 +78,7 @@ const LoginForm = ( {
 
 };
 
-const getUserType = async email => {
+export const getUserType = async email => {
 
   const database            = getFirestore();
   const adminReference      = doc(
@@ -124,4 +122,3 @@ const displayUserData = async() => {
   typesActions[ userType ]();
 
 };
-export default LoginForm;
