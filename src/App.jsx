@@ -8,7 +8,9 @@ import {
 import React from "react";
 
 import { AdminPanel } from "./components/AdminPanel";
-import LoginForm from "./components/LoginForm";
+import {
+ getUserType, LoginForm
+} from "./components/LoginForm";
 import UserPanel from "./components/UserPanel";
 import methods from "./methods";
 import spinner from "./spinner";
@@ -111,9 +113,29 @@ const App = () => {
     setUser,
   ] = React.useState( "" );
 
+  // check if already logged in
+  React.useEffect(
+    () => {
+
+      const auth = getAuth();
+
+      auth.onAuthStateChanged( user => {
+
+        if ( user ) {
+
+          setUser( user.email );
+
+        }
+
+      } );
+
+    },
+    []
+  );
+
   return (
     <div className="App">
-      <ExitButton user={user} />
+      <ExitButton user={user} setUser={setUser}/>
       <LoginForm user={user} setUser={setUser} />
     </div>
   );
@@ -152,14 +174,20 @@ const makeForm = () => {
   return loginForm;
 
 };
-const ExitButton = ({user}) => {
+const ExitButton = ( {
+  user, setUser,
+} ) => {
 
   const auth = getAuth();
 
   return (
     <button
-      onClick={ () =>
-        signOut( auth ) }
+      onClick={ () => {
+
+        setUser( "" );
+        signOut( auth );
+
+      } }
       className="exit-button"
       hidden={!user}
     >
