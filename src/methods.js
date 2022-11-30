@@ -5,9 +5,9 @@ import {
   deleteField, doc, getDoc, getFirestore, updateDoc,
 } from "firebase/firestore";
 
-import {
-  renderAdminUI, renderSubscriptions,
-} from "./components/AdminPanel";
+// import {
+//   renderAdminUI, SubscribersList,
+// } from "./components/AdminPanel";
 import { getFirebaseConfig } from "./firebase-config";
 
 const app             = initializeApp( getFirebaseConfig() );
@@ -102,7 +102,7 @@ const updateUser = async(
       length
     ) );
     document.querySelector( "#subscriptions" )
-      .replaceWith( await renderSubscriptions() );
+      .replaceWith( await SubscribersList() );
     return document.querySelector( "#info-text" ).textContent = `Подписка ${ type } на ${ length } мес. активирована до ${ expiry.toLocaleDateString() }`;
 
   } catch ( error ) {
@@ -209,62 +209,6 @@ const updateSubscription = async(
   }
 
 };
-const renderRequestType = (
-  addObjectToDatabase, email, key, value
-) => {
-
-  const container = document.createElement( "div" );
-  container.classList.add( "request" );
-  const buttonsContainer = document.createElement( "div" );
-  buttonsContainer.classList.add( "buttons" );
-
-  // accept button
-  const acceptButton       = document.createElement( "button" );
-  acceptButton.textContent = "Принять";
-  acceptButton.addEventListener(
-    "click",
-    async event => {
-
-      const success = await updateSubscription(
-        addObjectToDatabase,
-        email,
-        key,
-        value
-      );
-      renderAdminUI();
-      return document.querySelector( "#info-text" ).textContent = success;
-
-    }
-  );
-
-  // deny button
-  const denyButton       = document.createElement( "button" );
-  denyButton.textContent = "Отклонить";
-  denyButton.addEventListener(
-    "click",
-    _ => {
-
-      clearRequest(
-        email,
-        key
-      );
-      return container.remove();
-
-    }
-  );
-  const paragraph       = document.createElement( "p" );
-  paragraph.textContent = `${ key }: ${ value } мес.`;
-  buttonsContainer.append(
-    acceptButton,
-    denyButton
-  );
-  container.append(
-    paragraph,
-    buttonsContainer
-  );
-  return container;
-
-};
 export default {
   createSubscriptionObject,
   displayError,
@@ -330,34 +274,6 @@ export default {
 
   },
 
-  /**
-   * Render incoming requests
-   * positioned to the right of the corresponding users
-   * with button to accept which fills the form
-   */
-  renderRequest: (
-    request, addObjectToDatabase
-  ) => {
-
-    const requestContainer = document.createElement( "div" );
-    requestContainer.classList.add( "request-container" );
-    const requestContent = Object.entries( request.types )
-      .map( ( [
-        key,
-        value,
-      ] ) =>
-        renderRequestType(
-          addObjectToDatabase,
-          request.user,
-          key,
-          Number( value )
-        ) );
-    requestContent.map( item =>
-      requestContainer.append( item ) );
-    return document.querySelector( `li[data-email="${ request.user }"]` )
-      ?.append( requestContainer );
-
-  },
   timestampToDate: timestamp => {
 
     const date = new Date( timestamp.seconds * 1000 );

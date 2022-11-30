@@ -31,5 +31,6 @@
     "terminal.ansiRed": "#AC4142",
     "terminal.ansiWhite": "#D0D0D0",
     "terminal.ansiYellow": "#F4BF75"
-  }
+  },
+  "workbench.list.multiSelectModifier": "alt"
 }

@@ -1,0 +1,36 @@
+.form-container > form {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-container[hidden] {
+  display: none;
+}
+
+form > input,
+form > select,
+form > button {
+  padding: 0.2em 0.4em;
+
+  color: #fff;
+  font-weight: 100;
+  font-size: 1.2em;
+
+  background-color: #333;
+  border: none;
+  outline: none;
+
+  transition: all 0.2s ease-in-out;
+}
+
+form > input:hover,
+form > select:hover {
+  background-color: #444;
+}
+
+form > #password {
+  opacity: 0.5;
+}

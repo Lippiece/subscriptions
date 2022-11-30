@@ -1,6 +1,8 @@
 /* eslint-disable fp/no-nil */
 /* eslint-disable consistent-return */
 /* eslint-disable fp/no-unused-expression */
+import "../css/forms.css";
+
 import
 {
   getAuth,
@@ -51,8 +53,7 @@ export const LoginForm = ( {
   return (
     <div
       className="form-container"
-      hidden={Boolean( user )}
-    >
+      hidden={Boolean( user )} >
       <form
         onSubmit={ login }
       >
@@ -61,13 +62,17 @@ export const LoginForm = ( {
           onChange={
             event =>
               setEmail( event.target.value )
-          } />
+          }
+          placeholder="Email"
+        />
         <input
           type="password"
           onChange={
             event =>
               setPassword( event.target.value )
-          } />
+          }
+          placeholder="Пароль"
+        />
         <button
           type="submit">
           Login
@@ -91,11 +96,11 @@ export const getUserType = async email => {
     "subscriptions",
     email
   );
-  const adminData           = await getDoc( adminReference );
-  const subscriberData      = await getDoc( subscriberReference );
+  const adminDocument       = await getDoc( adminReference );
+  const subscriberDocument  = await getDoc( subscriberReference );
   const types               = {
-    admin: adminData.data(),
-    sub  : subscriberData.data(),
+    admin: adminDocument.data(),
+    sub  : subscriberDocument.data(),
   };
 
   return Object.keys( types )
