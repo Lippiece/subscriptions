@@ -9,12 +9,26 @@
   list-style: none;
 }
 
+.requests > ul,
+.subscriptions > ul {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+
+  list-style: none;
+}
+
 #subscriptions > li {
   display: flex;
   flex-direction: column;
   gap: 0.5em;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 
   border-bottom: 1px solid #555;
+}
+
+.request > button {
+  font-size: 1em;
 }

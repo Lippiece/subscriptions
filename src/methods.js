@@ -5,9 +5,9 @@ import {
   deleteField, doc, getDoc, getFirestore, updateDoc,
 } from "firebase/firestore";
 
-// import {
-//   renderAdminUI, SubscribersList,
-// } from "./components/AdminPanel";
+/* import {
+     renderAdminUI, SubscribersList,
+   } from "./components/AdminPanel"; */
 import { getFirebaseConfig } from "./firebase-config";
 
 const app             = initializeApp( getFirebaseConfig() );
@@ -112,31 +112,19 @@ const updateUser = async(
   }
 
 };
-
-const fillForm = request =>
-  event => {
-
-    event.preventDefault();
-    const form = document.querySelector( "#new-user-form" );
-
-    form[ "new-user-email" ].value      = request.user;
-    form[ "new-user-sub-length" ].value = request.length;
-    form[ "new-user-sub-type" ].value   = request.type;
-    form[ "new-user-password" ].value   = "password";
-    return form;
-
-  };
 const createSubscriptionObject = (
   type, expiry
 ) =>
-  (
-    { [ type ]: expiry  } );
+  ( { [ type ]: expiry  } );
 const incrementDate            = (
   date, length
 ) => {
 
   const output = new Date( date );
-  output.setMonth( output.getMonth() + length );
+  output.setMonth(
+    output.getMonth() + length,
+    0
+  );
   return output;
 
 };
@@ -212,7 +200,6 @@ const updateSubscription = async(
 export default {
   createSubscriptionObject,
   displayError,
-  fillForm,
   getFileName: url => {
 
     const start = url.indexOf( "%2F" ) + "%2F".length;
@@ -224,6 +211,21 @@ export default {
 
   },
   incrementDate,
+
+  removeFromArray: (
+    array, toRemove
+  ) =>
+    array.filter( item =>
+      item !== toRemove ),
+  removeFromObject: (
+    /** @type {object} */ object, /** @type {string | number} */ toRemove
+  ) => {
+
+    const newObject = { ...object };
+    delete newObject[ toRemove ];
+    return newObject;
+
+  },
   renderForm: (
     auth,
     createUserWithEmailAndPassword,
@@ -262,18 +264,6 @@ export default {
     return newUserForm;
 
   },
-
-  renderInfobox: () => {
-
-    const container = document.createElement( "div" );
-    container.id    = "info-container";
-    const paragraph = document.createElement( "p" );
-    paragraph.id    = "info-text";
-    container.append( paragraph );
-    return container;
-
-  },
-
   timestampToDate: timestamp => {
 
     const date = new Date( timestamp.seconds * 1000 );

@@ -20,57 +20,20 @@ import SubscribersList from "./SubscribersList";
 const app      = initializeApp( getFirebaseConfig() );
 const database = getFirestore( app );
 
-const AdminPanel          = () => {
-
-  console.log( "AdminPanel" );
-  return ( <>
+const AdminPanel = () =>
+  ( <>
+    <Infobox />
     <NewUserForm />
     <SubscribersList database={ database } />
-  </>
-  );
-
-};
-const Infobox             = () =>
-  (
-    <div
-      id="info-container"
+  </> );
+const Infobox    = () =>
+  ( <div
+    id="info-container"
+  >
+    <p
+      id="info-text"
     >
-      <p
-        id="info-text"
-      >
-        Admin
-      </p>
-    </div>
-  );
-const addObjectToDatabase = async(
-  email, object
-) => {
-
-  const reference = doc(
-    database,
-    "subscriptions",
-    email
-  );
-  const document  = await getDoc( reference );
-  const merged    = { subs: {
-    ...( document.exists()
-      ? document.data().subs
-      : {} ),
-    ...object,
-  } };
-  try {
-
-    return await setDoc(
-      reference,
-      merged
-    );
-
-  } catch ( error ) {
-
-    console.error( error );
-    return infoText.textContent = methods.displayError( error );
-
-  }
-
-};
+      Admin
+    </p>
+  </div> );
 export default AdminPanel;

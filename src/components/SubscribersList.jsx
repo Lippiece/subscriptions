@@ -10,7 +10,7 @@ import React from "react";
 import methods from "../methods";
 import RequestsList from "./RequestsList";
 
-const SubscribersList  = ( { database } ) => {
+const SubscribersList = ( { database } ) => {
 
   const [
     subscribers,
@@ -53,22 +53,31 @@ const SubscribersList  = ( { database } ) => {
             <div
               className="subscriptions"
             >
-              { Object.keys( data_ ).length > 0
-                ? Object.entries( data_.subs )
-                  .map( ( [
-                    key,
-                    value,
-                  ] ) =>
-                    (
-                      <p key= { key }>
-                        { `${ key }: ${ methods.timestampToDate( value ) }` }
-                      </p>
-                    ) )
-                : undefined }
+              <p>
+                Активные подписки:
+              </p>
+              <ul>
+
+                { Object.keys( data_ ).length > 0
+                  ? Object.entries( data_.subs )
+                    .map( ( [
+                      key,
+                      value,
+                    ] ) =>
+                      (
+                        <li key= { key }>
+                          { `${ key }: ${ methods.timestampToDate( value ) }` }
+                        </li>
+                      ) )
+                  : undefined }
+              </ul>
             </div>
             <RequestsList
-              database={database}
-              email={email} />
+              database       = { database }
+              email          = { email }
+              setSubscribers={ setSubscribers }
+              getSubscriptions={ getSubscriptions }
+            />
           </li>
         );
 
