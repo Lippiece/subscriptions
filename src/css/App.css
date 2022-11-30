@@ -1,13 +1,14 @@
 html,
 body,
-#root {
+#root,
+.app {
   width: 100%;
   height: 100%;
 }
 
 *,
-.app,
 #root {
+
   color: rgb(255 255 255 / 75%);
   font-family: Rubik, Arial, Helvetica, sans-serif;
 
@@ -20,7 +21,6 @@ body,
   gap: 1em;
   align-items: center;
   justify-content: space-evenly;
-  height: 99%;
 }
 
 button {
