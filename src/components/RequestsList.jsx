@@ -1,3 +1,6 @@
+import Button from "@mui/material/Button";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
 import {
   deleteField,
   doc,
@@ -83,38 +86,105 @@ const RequestElement = ( {
   setRequests,
   getSubscriptions,
   setSubscribers,
-} ) =>
-  (
-    <li className="request">
-      <p>
-        { `${ type }: ${ methods.timestampToDate( expiry ) }` }
-      </p>
-      <button
-        type="button"
-        onClick={ async() => {
+} ) => {
 
-          await acceptRequest(
+  const [
+    anchorElement,
+    setAnchorElement,
+  ] = React.useState( null );
+
+  const handleClick = event => {
+
+    setAnchorElement( event.currentTarget );
+
+  };
+
+  const handleClose = () => {
+
+    setAnchorElement( null );
+
+  };
+
+  const open = Boolean( anchorElement );
+  const id   = open
+    ? "simple-popover"
+    : undefined;
+
+  const handleAccept =  async() => {
+
+    await acceptRequest(
+      type,
+      expiry,
+      database,
+      email
+    )
+      .then( async() => {
+
+        setRequests( methods.removeFromObject(
+          requests,
+          type
+        ) );
+        await getSubscriptions( database )
+          .then( setSubscribers );
+
+      } );
+
+  };
+
+  return <li className="request">
+    <p>
+      { `${ type }: ${ methods.timestampToDate( expiry ) }` }
+    </p>
+    <Button
+      onClick={ handleClick }
+      variant="outlined"
+      size="small"
+    >
+      Изменить
+    </Button>
+    <Menu
+      id={id}
+      anchorEl={ anchorElement }
+      open={ open }
+      onClose={ handleClose }
+    >
+      <MenuItem
+        onClick={ () => {
+
+          handleClose();
+          handleAccept();
+
+        } }
+      >
+        Принять
+      </MenuItem>
+      <MenuItem
+        onClick={ () => {
+
+          handleClose();
+          removeRequest(
             type,
-            expiry,
             database,
             email
           )
-            .then( async() => {
+            .then( () => {
 
               setRequests( methods.removeFromObject(
                 requests,
                 type
               ) );
-              await getSubscriptions( database )
-                .then( setSubscribers );
 
             } );
 
-        } } >
-        Принять
-      </button>
-    </li>
-  );
+        } }
+      >
+        Отменить
+      </MenuItem>
+    </Menu>
+
+  </li>;
+
+};
 
 // Get subscription requests for a user and return them as an array
 const getRequests = async(
