@@ -53,3 +53,14 @@ form > #password:active {
 
   text-align: center;
 }
+
+form[hidden] {
+  display: none;
+}
+
+#hide-button {
+
+  margin-bottom: 1em;
+
+  font-size: medium;
+}

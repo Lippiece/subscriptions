@@ -38,6 +38,10 @@ const NewUserForm = ( {
     info,
     setInfo,
   ] = React.useState( "" );
+  const [
+    hidden_,
+    setHidden,
+  ] = React.useState( true );
   const updateUser = async event => {
 
     event.preventDefault();
@@ -73,8 +77,8 @@ const NewUserForm = ( {
         console.log( "user signed out" );
         console.log(
           "Trying to login with:",
-          email,
-          password
+          userEmail,
+          userPassword
         );
         await signInWithEmailAndPassword(
           auth,
@@ -95,7 +99,21 @@ const NewUserForm = ( {
 
   return (
     <div className="form-container">
-      <form onSubmit={updateUser}>
+      <button
+        onClick={
+          () =>
+            setHidden( !hidden_ )
+        }
+        id="hide-button"
+      >
+        {`${ hidden_
+          ? "Показать"
+          : "Скрыть" } форму`}
+      </button>
+      <form
+        onSubmit={ updateUser }
+        hidden={ hidden_ }
+      >
         <input
           type="email"
           onChange={
