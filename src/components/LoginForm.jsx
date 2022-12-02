@@ -15,17 +15,23 @@ import {
 } from "firebase/firestore";
 import React from "react";
 
+import methods from "../methods";
+
 export const LoginForm = ( {
   user, setUser,
 } ) => {
 
   const [
-    email,
+    operatorEmail,
     setEmail,
   ]       = React.useState( "" );
   const [
-    password,
+    operatorPassword,
     setPassword,
+  ] = React.useState( "" );
+  const [
+    info,
+    setInfo,
   ] = React.useState( "" );
   const login = async event => {
 
@@ -36,15 +42,16 @@ export const LoginForm = ( {
 
       await signInWithEmailAndPassword(
         auth,
-        email,
-        password
+        operatorEmail,
+        operatorPassword
       );
-      const userType = await getUserType( email );
+      setInfo( "Вход выполнен" );
+      const userType = await getUserType( operatorEmail );
       setUser( userType );
 
     } catch ( error ) {
 
-      console.error( error );
+      setInfo( methods.displayError( error ) );
 
     }
 
@@ -78,6 +85,12 @@ export const LoginForm = ( {
           Login
         </button>
       </form>
+      <p
+        className="info"
+        hidden={!info}
+      >
+        {info}
+      </p>
     </div>
   );
 
@@ -106,24 +119,5 @@ export const getUserType = async email => {
   return Object.keys( types )
     .find( key =>
       types[ key ] );
-
-};
-
-const displayUserData = async() => {
-
-  const auth           = getAuth();
-  const greeting       = document.createElement( "p" );
-  greeting.textContent = `Здравствуйте, ${ auth.currentUser.email }!`;
-  document.body.replaceChildren(
-    greeting,
-    spinner
-  );
-
-  const userType     = await getUserType( auth.currentUser.email );
-  const typesActions = {
-    admin: AdminPanel,
-    sub  : UserPanel,
-  };
-  typesActions[ userType ]();
 
 };

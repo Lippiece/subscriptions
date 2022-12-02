@@ -1,8 +1,12 @@
 /* eslint-disable fp/no-mutation, fp/no-unused-expression,fp/no-nil */
 import { initializeApp } from "firebase/app";
-import { fetchSignInMethodsForEmail } from "firebase/auth";
 import {
-  deleteField, doc, getDoc, getFirestore, updateDoc,
+  deleteField,
+  doc,
+  getDoc,
+  getFirestore,
+  setDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 /* import {
@@ -25,7 +29,6 @@ const getSubscription = async email => {
   } catch ( error ) {
 
     console.error( error );
-    return infoText.textContent = methods.displayError( error );
 
   }
 
@@ -57,65 +60,14 @@ const clearRequest = async(
   }
 
 };
-
-const updateUser = async(
-  event, newUserForm, auth, createUserWithEmailAndPassword, addObjectToDatabase
-) => {
-
-  event.preventDefault();
-
-  const email    = newUserForm[ "new-user-email" ].value;
-  const password = newUserForm[ "new-user-password" ].value;
-  const length   = Number( newUserForm[ "new-user-sub-length" ].value );
-  const type     = newUserForm[ "new-user-sub-type" ].value;
-
-  try {
-
-    // check if user exists
-    const signIn = await fetchSignInMethodsForEmail(
-      auth,
-      email
-    );
-    await updateSubscription(
-      addObjectToDatabase,
-      email,
-      type,
-      length
-    );
-
-    if ( !signIn.includes( "password" ) ) {
-
-      await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-      return document.querySelector( "#info-text" ).textContent = "Пользователь создан";
-
-    }
-
-    document.querySelector( "#new-user-form" )
-      .reset();
-    const expiry = new Date( incrementDate(
-      new Date(),
-      length
-    ) );
-    document.querySelector( "#subscriptions" )
-      .replaceWith( await SubscribersList() );
-    return document.querySelector( "#info-text" ).textContent = `Подписка ${ type } на ${ length } мес. активирована до ${ expiry.toLocaleDateString() }`;
-
-  } catch ( error ) {
-
-    return document.querySelector( "#info-text" ).textContent = displayError( error );
-
-  }
-
-};
 const createSubscriptionObject = (
-  type, expiry
+  /** @type {string} */ type,
+  /** @type {number} */ length
 ) =>
-  ( { [ type ]: expiry  } );
+  ( { [ type ]: incrementDate(
+    Date.now(),
+    length
+  ) } );
 const incrementDate            = (
   date, length
 ) => {
@@ -162,56 +114,45 @@ const displayError = error =>  {
   return errors[ code ] || message;
 
 };
-const updateSubscription = async(
-  addObjectToDatabase, email, type, length
-) => {
+export default {
+  addObjectToDatabase: async(
+    /** @type {string} */ email,
+    /** @type {{}} */ object
+  ) => {
 
-  await addObjectToDatabase(
-    email,
-    createSubscriptionObject(
-      type,
-      incrementDate(
-        new Date(),
-        length
-      )
-    )
-  );
-  renderAdminUI();
-
-  // get doc with user requests
-  const database         = getFirestore( app );
-  const reference        = doc(
-    database,
-    "requests",
-    email
-  );
-  const documentSnapshot = await getDoc( reference );
-
-  if ( documentSnapshot.exists() ) {
-
-    return await updateDoc(
+    const reference        = doc(
+      database,
+      "subscriptions",
+      email
+    );
+    const documentSnapshot = await getDoc( reference );
+    await setDoc(
       reference,
-      {  [ type ]: deleteField()  }
+      { subs: {
+        ...documentSnapshot.data()?.subs,
+        ...object,
+      } }
     );
 
-  }
+    // log the document data
+    console.log( documentSnapshot.data() );
 
-};
-export default {
+  },
   createSubscriptionObject,
   displayError,
   getFileName: url => {
 
-    const start = url.indexOf( "%2F" ) + "%2F".length;
-    const end   = url.indexOf( "?" );
+    const startString = "%2F";
+    const start       = url.indexOf( startString ) + startString.length;
+    const end         = url.indexOf( "?" );
     return decodeURI( url.slice(
       start,
       end
     ) );
 
   },
-  incrementDate,
 
+  incrementDate,
   removeFromArray: (
     array, toRemove
   ) =>
@@ -224,44 +165,6 @@ export default {
     const newObject = { ...object };
     delete newObject[ toRemove ];
     return newObject;
-
-  },
-  renderForm: (
-    auth,
-    createUserWithEmailAndPassword,
-    addObjectToDatabase
-  ) => {
-
-    const newUserForm     = document.createElement( "form" );
-    newUserForm.id        = "new-user-form";
-    newUserForm.innerHTML = `
-      <label for="new-user-email">Email</label>
-      <input type="email" id="new-user-email" />
-      <label for="new-user-password">Пароль</label>
-      <input type="password" id="new-user-password" />
-      <label for="new-user-sub-length">Длительность подписки (мес.)</label>
-      <input type="number" id="new-user-sub-length" />
-      <label for="new-user-sub-type">Тип подписки</label>
-      <select id="new-user-sub-type">
-        <option value="A">A</option>
-        <option value="B">B</option>
-        <option value="C">C</option>
-      </select>
-      <button type="submit">Зарегистрировать</button>
-    `;
-
-    newUserForm.addEventListener(
-      "submit",
-      event =>
-        updateUser(
-          event,
-          newUserForm,
-          auth,
-          createUserWithEmailAndPassword,
-          addObjectToDatabase
-        )
-    );
-    return newUserForm;
 
   },
   timestampToDate: timestamp => {

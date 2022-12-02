@@ -12,7 +12,9 @@ import React from "react";
 import methods from "../methods";
 
 const RequestsList = ( {
-  email, database, setSubscribers, getSubscriptions,
+  email,
+  database,
+  refreshSubscriptions,
 } ) => {
 
   const [
@@ -66,8 +68,7 @@ const RequestsList = ( {
                       email            = { email }
                       requests         = { requests }
                       setRequests      = { setRequests }
-                      getSubscriptions = { getSubscriptions }
-                      setSubscribers   = { setSubscribers }
+                      refreshSubscriptions = { refreshSubscriptions }
                     />
                   ) )}
             </ul>
@@ -84,8 +85,7 @@ const RequestElement = ( {
   email,
   requests,
   setRequests,
-  getSubscriptions,
-  setSubscribers,
+  refreshSubscriptions,
 } ) => {
 
   const [
@@ -124,8 +124,7 @@ const RequestElement = ( {
           requests,
           type
         ) );
-        await getSubscriptions( database )
-          .then( setSubscribers );
+        refreshSubscriptions();
 
       } );
 

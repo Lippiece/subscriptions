@@ -34,3 +34,22 @@ form > select:hover {
 form > #password {
   opacity: 0.5;
 }
+
+form > #password:hover,
+form > #password:focus,
+form > #password:active {
+  opacity: 1;
+}
+
+.info {
+  max-width: 25em;
+  margin: 0 auto;
+  margin-top: 1em;
+
+  color: #aaa;
+  font-size: 0.8em;
+
+  /* center it evenly from both sides */
+
+  text-align: center;
+}

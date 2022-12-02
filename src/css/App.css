@@ -1,12 +1,15 @@
+/* make page full height */
 html,
 body,
-#root,
-.app {
-  width: 100%;
+#root {
   height: 100%;
 }
 
 #root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 
   color: rgb(255 255 255 / 75%);
   font-family: Rubik, Arial, Helvetica, sans-serif;

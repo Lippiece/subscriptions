@@ -1,5 +1,6 @@
 /* eslint-disable fp/no-mutation,fp/no-unused-expression,fp/no-nil */
 import "./css/App.css";
+
 import { css } from "@emotion/css";
 import {
   getAuth,
@@ -16,8 +17,16 @@ import UserPanel from "./components/UserPanel";
 const App = () => {
 
   const [
-    user,
-    setUser,
+    userType,
+    setUserType,
+  ] = React.useState( "" );
+  const [
+    userEmail,
+    setUserEmail,
+  ] = React.useState( "" );
+  const [
+    userPassword,
+    setUserPassword,
   ] = React.useState( "" );
 
   // check if already logged in
@@ -31,7 +40,7 @@ const App = () => {
         if ( authUser ) {
 
           const type = await getUserType( authUser.email );
-          setUser( type );
+          setUserType( type );
 
         }
 
@@ -44,13 +53,18 @@ const App = () => {
   return (
     <div className="app">
       <ExitButton
-        user={user}
-        setUser={setUser}/>
+        user={userType}
+        setUser={setUserType}/>
       <LoginForm
-        user={ user }
-        setUser={ setUser } />
-      { user === "admin" && <AdminPanel /> }
-      { user === "sub" && <UserPanel /> }
+        user={ userType }
+        setUser={ setUserType } />
+      { userType === "admin"
+      && <AdminPanel
+        userEmail={ userEmail }
+        userPassword={ userPassword }
+      /> }
+      { userType === "sub"
+      && <UserPanel /> }
     </div>
   );
 
