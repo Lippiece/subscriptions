@@ -55,7 +55,6 @@ const clearRequest = async(
   } catch ( error ) {
 
     console.error( error );
-    return infoText.textContent = methods.displayError( error );
 
   }
 

@@ -1,9 +1,11 @@
+/* eslint-disable fp/no-unused-expression */
 import "../css/forms.css";
 
 import {
   createUserWithEmailAndPassword,
   fetchSignInMethodsForEmail,
   signInWithEmailAndPassword,
+  signOut,
 } from "firebase/auth";
 import React from "react";
 
@@ -13,7 +15,7 @@ const NewUserForm = ( {
   auth,
   userEmail,
   userPassword,
-  refreshSubscriptions
+  refreshSubscriptions,
 } ) => {
 
   const [
@@ -63,6 +65,14 @@ const NewUserForm = ( {
 
         await createUserWithEmailAndPassword(
           auth,
+          email,
+          password
+        );
+        console.log( "user created" );
+        await signOut( auth );
+        console.log( "user signed out" );
+        console.log(
+          "Trying to login with:",
           email,
           password
         );

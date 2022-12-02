@@ -1,7 +1,6 @@
 /* eslint-disable fp/no-mutation,fp/no-unused-expression,fp/no-nil */
 import "./css/App.css";
 
-import { css } from "@emotion/css";
 import {
   getAuth,
   signOut,
@@ -10,7 +9,8 @@ import React from "react";
 
 import AdminPanel from "./components/AdminPanel";
 import {
-  getUserType, LoginForm,
+  getUserType,
+  LoginForm,
 } from "./components/LoginForm";
 import UserPanel from "./components/UserPanel";
 
@@ -39,7 +39,7 @@ const App = () => {
 
         if ( authUser ) {
 
-          const type = await getUserType( authUser.email );
+          const type /* :string */ = await getUserType( String( authUser.email ) );
           setUserType( type );
 
         }
@@ -57,7 +57,10 @@ const App = () => {
         setUser={setUserType}/>
       <LoginForm
         user={ userType }
-        setUser={ setUserType } />
+        setUser={ setUserType }
+        setUserEmail={ setUserEmail }
+        setUserPassword={ setUserPassword }
+      />
       { userType === "admin"
       && <AdminPanel
         userEmail={ userEmail }

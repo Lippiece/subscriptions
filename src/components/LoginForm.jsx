@@ -18,7 +18,10 @@ import React from "react";
 import methods from "../methods";
 
 export const LoginForm = ( {
-  user, setUser,
+  user,
+  setUser,
+  setUserEmail,
+  setUserPassword,
 } ) => {
 
   const [
@@ -46,6 +49,8 @@ export const LoginForm = ( {
         operatorPassword
       );
       setInfo( "Вход выполнен" );
+      setUserEmail( operatorEmail );
+      setUserPassword( operatorPassword );
       const userType = await getUserType( operatorEmail );
       setUser( userType );
 
@@ -96,7 +101,7 @@ export const LoginForm = ( {
 
 };
 
-export const getUserType = async email => {
+export const getUserType = async( /** @type {string} */ email ) => {
 
   const database            = getFirestore();
   const adminReference      = doc(
