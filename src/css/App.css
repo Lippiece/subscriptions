@@ -2,7 +2,7 @@
 html,
 body,
 #root {
-  height: 100%;
+  height: fit-content;
 }
 
 #root {
@@ -23,6 +23,7 @@ body,
   gap: 1em;
   align-items: center;
   justify-content: space-evenly;
+  min-height: 100vh;
 }
 
 button {
