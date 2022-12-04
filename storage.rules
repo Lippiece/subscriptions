@@ -4,20 +4,14 @@ service firebase.storage {
   	match /{all=**} {
     	allow list: if request.auth != null;
     }
-    match /A/{resourceID} {
-      allow read: if firestore.get(/databases/(default)/documents/subscriptions/$(request.auth.token.email))
-      .data.type
-      == "A";
-    }
-    match /B/{resourceID} {
-      allow read: if firestore.get(/databases/(default)/documents/subscriptions/$(request.auth.token.email))
-      .data.type
-      == "B";
-    }
-    match /C/{resourceID} {
-			allow read: if firestore.get(/databases/(default)/documents/subscriptions/$(request.auth.token.email))
-      .data.type
-      == "C";
+    match /{type}/{resourceID} {
+   		function isSubscribedToType ()
+  		{
+        let document = firestore.get(/databases/(default)/documents/subscriptions/$(request.auth.token.email));
+        let subscriptions = document.data.subs;
+	    	return subscriptions[type] != null;
+	  	}
+      allow read: if isSubscribedToType();
     }
   }
 }
