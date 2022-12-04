@@ -132,7 +132,7 @@ const RequestElement = ( {
 
   return <li className="request">
     <p>
-      { `${ type }: ${ methods.timestampToDate( expiry ) }` }
+      { `${ type }: ${ expiry } мес.` }
     </p>
     <Button
       onClick={ handleClick }
