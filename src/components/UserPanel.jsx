@@ -1,13 +1,16 @@
 /* eslint-disable fp/no-nil, fp/no-mutation, fp/no-unused-expression */
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
 import { getAuth } from "firebase/auth";
 import {
-  collection,
   doc,
   getDoc,
   getFirestore,
   setDoc,
   updateDoc,
-  where,
 } from "firebase/firestore";
 import {
   getDownloadURL,
@@ -18,31 +21,16 @@ import {
 import React from "react";
 
 import methods from "../methods";
+import fileIcon from "../svg/file-regular.svg";
 
 const UserPanel = () =>
   (
     <>
-      <Infobox />
       <LinksList />
       <RequestForm />
+      {/* TODO: <RequestList/> */ }
     </>
   );
-const Infobox   = () => {
-
-  const auth = getAuth();
-  return (
-    <div
-      id="info-container"
-    >
-      <p
-        id="info-text"
-      >
-        { auth.currentUser?.email }
-      </p>
-    </div>
-  );
-
-};
 
 const LinksList = (  ) => {
 
@@ -89,17 +77,33 @@ const LinksList = (  ) => {
   );
   return (
     <div className="links">
+
       <p>
         Ссылки на файлы из ваших подписок:
       </p>
-      <ul id="links-list">
+      <List>
         { links.map( link =>
-          <li key={ link }>
-            <a href={ link }>
-              { methods.getFileName( link ) }
-            </a>
-          </li> ) }
-      </ul>
+          <ListItem key={ link }>
+            <ListItemIcon
+              sx={{
+                height: "2em",
+                minWidth: "auto",
+              }}
+            >
+              <img
+                src={ fileIcon }
+                alt="file" />
+            </ListItemIcon>
+            <ListItemButton
+              component="a"
+              href={ link }
+            >
+              <ListItemText
+                primary={ methods.getFileName( link ) }
+              />
+            </ListItemButton>
+          </ListItem> ) }
+      </List>
     </div>
   );
 
