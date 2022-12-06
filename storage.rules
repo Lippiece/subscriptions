@@ -2,11 +2,15 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
   	match /{all=**} {
+    	function isAdmin() {
+      	let document = firestore.get(/databases/(default)/documents/admins/$(request.auth.token.email));
+	    	return document.id == request.auth.token.email;
+      }
     	allow list: if request.auth != null;
+      allow read, write: if isAdmin()
     }
     match /{type}/{resourceID} {
-   		function isSubscribedToType ()
-  		{
+   		function isSubscribedToType () {
         let document = firestore.get(/databases/(default)/documents/subscriptions/$(request.auth.token.email));
         let subscriptions = document.data.subs;
 	    	return subscriptions[type] != null;

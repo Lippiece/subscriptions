@@ -113,6 +113,11 @@ const displayError = error =>  {
   return errors[ code ] || message;
 
 };
+const stringifyRequestDocument = ( /** @type {object} */ request ) =>
+  Object.keys( request )
+    .map( key =>
+      `${ key } на ${ request[ key ] } мес.` );
+
 export default {
   addObjectToDatabase: async(
     /** @type {string} */ email,
@@ -150,8 +155,8 @@ export default {
     ) );
 
   },
-
   incrementDate,
+
   removeFromArray: (
     array, toRemove
   ) =>
@@ -166,6 +171,7 @@ export default {
     return newObject;
 
   },
+  stringifyRequestDocument,
   timestampToDate: timestamp => {
 
     const date = new Date( timestamp.seconds * 1000 );

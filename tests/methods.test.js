@@ -2,21 +2,21 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, expect, test, vi } from "vitest";
+import {
+  describe, expect, test, vi,
+} from "vitest";
 
 import methods from "../src/methods";
 
-const mockAddObjectToDatabase =  vi.fn( ( object ) => {
+const mockAddObjectToDatabase =  vi.fn( object => {
 
   const document = getDoc( reference );
-  const merged   = {
-    subs: {
-      ... document.exists()
-        ? document.data().subs
-        : {},
-      ... object,
-    },
-  };
+  const merged   = { subs: {
+    ...document.exists()
+      ? document.data().subs
+      : {},
+    ...object,
+  } };
 
   return { type: object };
 
@@ -50,12 +50,12 @@ describe(
           expect( getFileName( url ) )
             .toBe( expected );
 
-        },
+        }
       );
 
     } );
 
-  },
+  }
 );
 
 describe(
@@ -63,15 +63,13 @@ describe(
   () => {
 
     const { timestampToDate } = methods;
-    const testCases           = [
-      [
-        {
-          nanoseconds: 0,
-          seconds    : 1_675_327_778,
-        },
-        "02.02.2023",
-      ],
-    ];
+    const testCases           = [ [
+      {
+        nanoseconds: 0,
+        seconds    : 1_675_327_778,
+      },
+      "02.02.2023",
+    ] ];
     testCases.map( ( [
       timestamp,
       expected,
@@ -84,54 +82,45 @@ describe(
           expect( timestampToDate( timestamp ) )
             .toBe( expected );
 
-        },
+        }
       );
 
     } );
 
-  },
+  }
 );
 
 describe(
-  "setDocMock",
+  "stringifyRequestDocument",
   () => {
 
-    const { setDocMock } = methods;
-    const testCases      = [
+    const { stringifyRequestDocument } = methods;
+    const testCases                    = [ [
+      {
+        A: 4,
+        B: 5,
+      },
       [
-        {
-          nanoseconds: 0,
-          seconds    : 1_675_327_778,
-        },
-        "02.02.2023",
+        "A на 4 мес.",
+        "B на 5 мес.",
       ],
-    ];
+    ] ];
     testCases.map( ( [
-      timestamp,
+      object,
       expected,
     ] ) => {
 
       test(
-        `setDocMock(${ timestamp.seconds })`,
+        `stringifyRequestDocument(${ object })`,
         () => {
 
-          expect( setDocMock( timestamp ) )
-            .toBe( expected );
+          expect( stringifyRequestDocument( object ) )
+            .toStrictEqual( expected );
 
-        },
+        }
       );
 
     } );
 
-  },
+  }
 );
-
-describe(
-  "addObjectToDatabase",
-  () => {
-
-      const { addObjectToDatabase } = methods;
-      const testCases               = [
-        [
-          {"sub@test.test":}
-  })

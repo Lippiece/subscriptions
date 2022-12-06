@@ -23,15 +23,56 @@ import React from "react";
 import methods from "../methods";
 import fileIcon from "../svg/file-regular.svg";
 
-const UserPanel = () =>
-  (
-    <>
-      <LinksList />
-      <RequestForm />
-      {/* TODO: <RequestList/> */ }
-    </>
+const UserPanel = ( { email } ) => {
+
+  const [
+    requests,
+    setRequests,
+  ] = React.useState( [] );
+  const updateRequests = React.useCallback(
+    async() => {
+
+      // get a document from firebase/requests with the name of the user's email
+      const auth = getAuth();
+      const user = auth.currentUser;
+      if ( user ) {
+
+        const database      = getFirestore();
+        const userReference = doc(
+          database,
+          "requests",
+          user.email
+        );
+        const userDocument  = await getDoc( userReference );
+        const userData      = userDocument.data();
+        setRequests( methods.stringifyRequestDocument( userData ) );
+
+      }
+
+    },
+    []
+  );
+  React.useEffect(
+    () => {
+
+      updateRequests();
+
+    },
+    [ updateRequests ]
   );
 
+  return <>
+    <LinksList />
+    <RequestForm
+      updateRequests={updateRequests}
+    />
+    <RequestsList
+      setRequests={setRequests}
+      requests={requests}
+    />
+  </>;
+
+};
 const LinksList = (  ) => {
 
   const [
@@ -86,7 +127,7 @@ const LinksList = (  ) => {
           <ListItem key={ link }>
             <ListItemIcon
               sx={{
-                height: "2em",
+                height  : "2em",
                 minWidth: "auto",
               }}
             >
@@ -124,7 +165,7 @@ const getLinksByType = async( /** @type {string} */ type ) => {
 
 };
 
-const RequestForm = () => {
+const RequestForm = ( { updateRequests } ) => {
 
   const [
     types,
@@ -137,7 +178,7 @@ const RequestForm = () => {
   const [
     length,
     setLength,
-  ] = React.useState( 3 );
+  ] = React.useState( 1 );
   const [
     info,
     setInfo,
@@ -160,10 +201,10 @@ const RequestForm = () => {
     [ types ]
   );
   const lengths = [
-    "1",
-    "3",
-    "6",
-    "12",
+    1,
+    3,
+    6,
+    12,
   ];
 
   const makeRequest = async event => {
@@ -194,6 +235,7 @@ const RequestForm = () => {
           { [ type ]: length }
         );
       setInfo( "Запрос отправлен" );
+      updateRequests();
 
     } catch ( error ) {
 
@@ -255,6 +297,25 @@ const RequestForm = () => {
   );
 
 };
+const RequestsList          = ( { requests } ) =>
+  (
+    <div
+      className="requests"
+      hidden={ requests.length === 0 }
+    >
+      <p>
+        Запросы на подписки:
+      </p>
+      <List>
+        { requests.map( ( /** @type {string} */ request ) =>
+          <ListItem key={ request }>
+            <ListItemText
+              primary={ request }
+            />
+          </ListItem> ) }
+      </List>
+    </div>
+  );
 const listSubscriptionTypes = async() => {
 
   // get the names of all folders in storage
@@ -263,67 +324,6 @@ const listSubscriptionTypes = async() => {
   const listResult = await listAll( reference );
   return listResult.prefixes.map( folder =>
     folder.name );
-
-};
-const renderRequestsToUser = async() => {
-
-  const auth = getAuth();
-
-  const firestore = getFirestore();
-  const document_ = await getDoc( doc(
-    firestore,
-    "requests",
-    auth.currentUser.email
-  ) );
-  if ( !document_.exists() ) return "";
-
-  const container = document.createElement( "div" );
-  container.id    = "requests";
-  const list      = document.createElement( "ul" );
-  Object.entries( document_.data() )
-    .map( ( [
-      type,
-      length,
-    ] ) => {
-
-      const listItem        = document.createElement( "li" );
-      const paragraph       = document.createElement( "p" );
-      paragraph.textContent = `${ type } на ${ length } месяцев`;
-      listItem.append( paragraph );
-      list.append( listItem );
-
-    } );
-  const info       = document.createElement( "p" );
-  info.textContent = "Ваши запросы:";
-  container.append( info );
-  container.append( list );
-  return container;
-
-};
-const renderUserUI = async() => {
-
-  const auth = getAuth();
-
-  // get "type" value from user email document
-  const firestore     = getFirestore();
-  const userReference = doc(
-    firestore,
-    "subscriptions",
-    auth.currentUser.email
-  );
-  const document_     = await getDoc( userReference );
-
-  const links             = await listLinks( document_.data() );
-  const subscriptionsInfo = renderUserSubscriptions( document_.data() );
-  const availables        = await RequestForm();
-  const requests          = await renderRequestsToUser();
-  return document.body.replaceChildren(
-    infobox,
-    links,
-    subscriptionsInfo,
-    availables,
-    requests
-  );
 
 };
 export default UserPanel;

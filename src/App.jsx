@@ -67,7 +67,7 @@ const App = () => {
         userPassword={ userPassword }
       /> }
       { userType === "sub"
-      && <UserPanel /> }
+      && <UserPanel email={userEmail} /> }
     </div>
   );
 
