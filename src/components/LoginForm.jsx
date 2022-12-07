@@ -87,7 +87,7 @@ export const LoginForm = ( {
         />
         <button
           type="submit">
-          Login
+          Войти
         </button>
       </form>
       <p
