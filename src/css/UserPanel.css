@@ -1,0 +1,22 @@
+.link {
+  background-color: rgb(51 51 51 / 65%);
+}
+
+.requests {
+  width  : fit-content;
+  margin : 10px;
+  padding: 10px;
+
+  background-color: rgb(51 51 51 / 65%);
+  border          : 1px solid #ccc;
+  border-radius   : 0.5em;
+}
+
+.request-primary {
+  color: rgb(255 255 255 / 75%);
+  font-weight: bold !important;
+}
+
+.request-secondary {
+  color: rgb(255 255 255 / 75%) !important;
+}

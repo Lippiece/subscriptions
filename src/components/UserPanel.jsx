@@ -1,4 +1,6 @@
 /* eslint-disable fp/no-nil, fp/no-mutation, fp/no-unused-expression */
+import "../css/UserPanel.css";
+
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -120,17 +122,10 @@ const LinksList = (  ) => {
       </p>
       <List>
         { links.map( link =>
-          <ListItem key={ link }>
-            <ListItemIcon
-              sx={{
-                height  : "2em",
-                minWidth: "auto",
-              }}
-            >
-              <img
-                src={ fileIcon }
-                alt="file" />
-            </ListItemIcon>
+          <ListItem
+            key={ link }
+            className="link"
+          >
             <ListItemButton
               component="a"
               href={ link }
@@ -138,6 +133,16 @@ const LinksList = (  ) => {
               <ListItemText
                 primary={ methods.getFileName( link ) }
               />
+              <ListItemIcon
+                sx={{
+                  height  : "2em",
+                  minWidth: "auto",
+                }}
+              >
+                <img
+                  src={ fileIcon }
+                  alt="file" />
+              </ListItemIcon>
             </ListItemButton>
           </ListItem> ) }
       </List>
@@ -305,7 +310,12 @@ const RequestsList          = ( { requests } ) =>
         { requests.map( ( /** @type {string} */ request ) =>
           <ListItem key={ request }>
             <ListItemText
+              classes={ {
+                primary  : "request-primary",
+                secondary: "request-secondary",
+              } }
               primary={ request }
+              secondary={"Обрабатывается..."}
             />
           </ListItem> ) }
       </List>
