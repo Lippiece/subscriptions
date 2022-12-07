@@ -10,7 +10,6 @@
       "name": "Launch Vivaldi against localhost",
       "url": "http://localhost:3000",
       "webRoot": "${workspaceFolder}",
-      "runtimeExecutable": "C:/Users/lf7ew/AppData/Local/Vivaldi/Application/vivaldi.exe"
     },
     {
       "type": "node",

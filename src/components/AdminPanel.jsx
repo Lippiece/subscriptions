@@ -10,7 +10,6 @@ import React from "react";
 
 import { getFirebaseConfig } from "../firebase-config";
 import NewUserForm from "./NewUserForm";
-
 import SubscriptionsPanel from "./SubscirptionsPanel";
 import SubscribersList from "./SubscribersList";
 
@@ -57,7 +56,7 @@ const AdminPanel = ( {
       subscribers          = { subscribers }
       refreshSubscriptions = { refreshSubscriptions }
     />
-    <SubscriptionsPanel/>
+    {/* <SubscriptionsPanel/> */}
   </>;
 
 };

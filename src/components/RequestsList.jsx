@@ -1,4 +1,11 @@
-import Button from "@mui/material/Button";
+/* eslint-disable fp/no-unused-expression */
+/* eslint-disable fp/no-nil */
+import "../css/RequestsList.css";
+
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemButton from "@mui/material/ListItemButton";
+import ListItemText from "@mui/material/ListItemText";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import {
@@ -28,7 +35,10 @@ const RequestsList = ( {
         database,
         email
       )
-        .then( setRequests );
+        .then( data =>
+          ( data
+            ? setRequests( data )
+            : setRequests( {} ) ) );
 
     },
     [
@@ -45,7 +55,10 @@ const RequestsList = ( {
     [ getData ]
   );
   return (
-    <div className="requests">
+    <div
+      className="requests"
+      hidden={Object.keys( requests ).length === 0}
+    >
       {
         Boolean( requests )
         && (
@@ -53,7 +66,7 @@ const RequestsList = ( {
             <p hidden={Object.keys( requests ).length === 0}>
               Запросы:
             </p>
-            <ul>
+            <List>
               {Object.entries( requests )
                 .map( ( [
                   key,
@@ -61,17 +74,17 @@ const RequestsList = ( {
                 ] ) =>
                   (
                     <RequestElement
-                      key              = { key }
-                      type             = { key }
-                      expiry           = { value }
-                      database         = { database }
-                      email            = { email }
-                      requests         = { requests }
-                      setRequests      = { setRequests }
+                      key                  = { key }
+                      type                 = { key }
+                      expiry               = { value }
+                      database             = { database }
+                      email                = { email }
+                      requests             = { requests }
+                      setRequests          = { setRequests }
                       refreshSubscriptions = { refreshSubscriptions }
                     />
                   ) )}
-            </ul>
+            </List>
           </> )
       }
     </div>
@@ -130,58 +143,58 @@ const RequestElement = ( {
 
   };
 
-  return <li className="request">
-    <p>
-      { `${ type }: ${ expiry } мес.` }
-    </p>
-    <Button
-      onClick={ handleClick }
-      variant="outlined"
-      size="small"
-    >
-      Изменить
-    </Button>
-    <Menu
-      id={id}
-      anchorEl={ anchorElement }
-      open={ open }
-      onClose={ handleClose }
-    >
-      <MenuItem
-        onClick={ () => {
-
-          handleClose();
-          handleAccept();
-
-        } }
+  return (
+    <ListItem className="request">
+      <ListItemText>
+        { `${ type }: ${ expiry } мес.` }
+      </ListItemText>
+      <ListItemButton
+        aria-describedby={ id }
+        onClick={ handleClick }
       >
-        Принять
-      </MenuItem>
-      <MenuItem
-        onClick={ () => {
-
-          handleClose();
-          removeRequest(
-            type,
-            database,
-            email
-          )
-            .then( () => {
-
-              setRequests( methods.removeFromObject(
-                requests,
-                type
-              ) );
-
-            } );
-
-        } }
+        Изменить
+      </ListItemButton>
+      <Menu
+        id={id}
+        anchorEl={ anchorElement }
+        open={ open }
+        onClose={ handleClose }
       >
-        Отменить
-      </MenuItem>
-    </Menu>
+        <MenuItem
+          onClick={ () => {
 
-  </li>;
+            handleClose();
+            handleAccept();
+
+          } }
+        >
+          Принять
+        </MenuItem>
+        <MenuItem
+          onClick={ () => {
+
+            handleClose();
+            removeRequest(
+              type,
+              database,
+              email
+            )
+              .then( () => {
+
+                setRequests( methods.removeFromObject(
+                  requests,
+                  type
+                ) );
+
+              } );
+
+          } }
+        >
+          Отменить
+        </MenuItem>
+      </Menu>
+
+    </ListItem> );
 
 };
 
