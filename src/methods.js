@@ -14,9 +14,9 @@ import {
    } from "./components/AdminPanel"; */
 import { getFirebaseConfig } from "./firebase-config";
 
-const app             = initializeApp( getFirebaseConfig() );
-const database        = getFirestore( app );
-const getSubscription = async email => {
+const app               = initializeApp( getFirebaseConfig() );
+const database          = getFirestore( app );
+const getSubscription   = async email => {
 
   try {
 
@@ -33,8 +33,16 @@ const getSubscription = async email => {
   }
 
 };
+const timestampToLocale = ( /** @type {{ seconds: number; }} */ timestamp ) => {
 
-const clearRequest = async(
+  const date = new Date( timestamp.seconds * 1000 );
+  return date.toLocaleString( "ru-RU" )
+    .split( "," )[ 0 ];
+
+};
+const timestampToDate = ( /** @type {{ seconds: number; }} */ timestamp ) =>
+  new Date( timestamp.seconds * 1000 );
+const clearRequest    = async(
   email, key
 ) => {
 
@@ -144,6 +152,33 @@ export default {
   },
   createSubscriptionObject,
   displayError,
+  filterExpiredSubs: ( /** @type {{ [x: string]: any; }} */ subs ) => {
+
+    const now = new Date();
+
+    // get the subscription types that are not expired
+    const filtered = Object.keys( subs )
+      .filter( key => {
+
+        const expiry = timestampToDate( subs[ key ] );
+        return expiry > now;
+
+      } );
+
+    // reconstruct the object
+    return { ...filtered.reduce(
+      (
+        accumulator, key
+      ) => {
+
+        accumulator[ key ] = subs[ key ];
+        return accumulator;
+
+      }
+      , {}
+    ) };
+
+  },
   getFileName: url => {
 
     const startString = "%2F";
@@ -172,11 +207,6 @@ export default {
 
   },
   stringifyRequestDocument,
-  timestampToDate: timestamp => {
-
-    const date = new Date( timestamp.seconds * 1000 );
-    return date.toLocaleString( "ru-RU" )
-      .split( "," )[ 0 ];
-
-  },
+  timestampToDate,
+  timestampToLocale,
 };

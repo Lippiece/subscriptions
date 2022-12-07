@@ -82,28 +82,24 @@ const LinksList = (  ) => {
   const getLinks = React.useCallback(
     async() => {
 
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if ( user ) {
+      const auth          = getAuth();
+      const user          = auth.currentUser;
+      const database      = getFirestore();
+      const userReference = doc(
+        database,
+        "subscriptions",
+        user.email
+      );
+      const userDocument  = await getDoc( userReference );
+      const userData      = userDocument.data();
+      const filteredSubs  = methods.filterExpiredSubs( userData.subs );
+      const typesToRender = Object.keys( filteredSubs );
 
-        const database      = getFirestore();
-        const userReference = doc(
-          database,
-          "subscriptions",
-          user.email
-        );
-        const userDocument  = await getDoc( userReference );
-        const userData      = userDocument.data();
-        const subs          = Object.keys( userData.subs )
-          .filter( sub =>
-            userData.subs[ sub ] );
-        const links_        = await Promise.all( subs.map( type =>
-          getLinksByType( type ) ) )
-          .then( links__ =>
-            links__.flat() );
-        setLinks( links_ );
-
-      }
+      const links_ = await Promise.all( typesToRender.map( type =>
+        getLinksByType( type ) ) )
+        .then( links__ =>
+          links__.flat() );
+      setLinks( links_ );
 
     },
     []
@@ -149,7 +145,6 @@ const LinksList = (  ) => {
   );
 
 };
-
 /* returns array of strings with links to files
    must resolve getDownloadURL, which returns a promise, for each file */
 const getLinksByType = async( /** @type {string} */ type ) => {
