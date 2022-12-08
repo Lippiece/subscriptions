@@ -18,8 +18,12 @@ import methods from "../methods";
 import RequestsList from "./RequestsList";
 
 const SubscribersList = ( {
+  requests,
+  setRequests,
+  globalRequests,
   database,
   subscribers,
+  refreshRequests,
   refreshSubscriptions,
 } ) =>
   (
@@ -34,11 +38,15 @@ const SubscribersList = ( {
         ] = subscriber;
         return (
           <SubscriberItem
-            key={ email }
-            email={ email }
-            data={ data }
-            database={ database }
-            refreshSubscriptions={ refreshSubscriptions }
+            data                 = { data }
+            database             = { database }
+            email                = { email }
+            globalRequests       = { globalRequests }
+            key                  = { email }
+            refreshRequests      = { refreshRequests }
+            refreshSubscriptions = { refreshSubscriptions }
+            requests             = { requests }
+            setRequests          = { setRequests }
           />
         );
 
@@ -51,18 +59,22 @@ const SubscriberItem     = ( {
   data,
   database,
   refreshSubscriptions,
+  refreshRequests,
+  requests,
+  setRequests,
+  globalRequests,
 } ) =>
   (
     <ListItem
       key={ email }
     >
-      <ListItemText primary={ email }>
-      </ListItemText>
+      <ListItemText
+        primary={ email } />
       <p>
         Активные подписки:
       </p>
       <List>
-      { data.subs
+        { data.subs
           ? Object.entries( data.subs )
             .map( ( [
               key,
@@ -70,20 +82,24 @@ const SubscriberItem     = ( {
             ] ) =>
               (
                 <SubscriptionItem
+                  database={ database }
+                  email={ email }
                   key={ key }
+                  refreshSubscriptions={ refreshSubscriptions }
                   type={ key }
                   value={ value }
-                  email={ email }
-                  database={ database }
-                  refreshSubscriptions={ refreshSubscriptions }
                 />
               ) )
           : "Не найдены" }
-    </List>
+      </List>
       <RequestsList
         database             = { database }
         email                = { email }
+        globalRequests       = { globalRequests }
+        refreshRequests      = { refreshRequests }
         refreshSubscriptions = { refreshSubscriptions }
+        requests             = { requests }
+        setRequests          = { setRequests }
       />
     </ListItem>
   );
@@ -96,18 +112,19 @@ const SubscriptionItem   = ( {
 } ) =>
   (
     <ListItem>
-      <ListItemText primary={ `${ type }: ${ methods.timestampToLocale( value ) }` }>
-      </ListItemText>
-      <ListItemButton onClick={ async() => {
+      <ListItemText
+        primary={ `${ type }: ${ methods.timestampToLocale( value ) }` } />
+      <ListItemButton
+        onClick={ async() => {
 
-        await cancelSubscription(
-          database,
-          email,
-          type
-        );
-        refreshSubscriptions();
+          await cancelSubscription(
+            database,
+            email,
+            type
+          );
+          refreshSubscriptions();
 
-      } }>
+        } }>
         Отменить
       </ListItemButton>
     </ListItem>

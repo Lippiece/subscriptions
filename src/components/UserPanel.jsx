@@ -1,11 +1,17 @@
 /* eslint-disable fp/no-nil, fp/no-mutation, fp/no-unused-expression */
 import "../css/UserPanel.css";
 
+import Button from "@mui/material/Button";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import {
+  createTheme, ThemeProvider,
+} from "@mui/material/styles";
 import { getAuth } from "firebase/auth";
 import {
   doc,
@@ -24,6 +30,8 @@ import React from "react";
 
 import methods from "../methods";
 import fileIcon from "../svg/file-regular.svg";
+
+const darkTheme = createTheme( { palette: { mode: "dark" } } );
 
 const UserPanel = ( { email } ) => {
 
@@ -69,10 +77,10 @@ const UserPanel = ( { email } ) => {
       updateRequests={updateRequests}
     />
     <RequestsList
-      setRequests={setRequests}
       requests={requests}
+      setRequests={setRequests}
     />
-  </>;
+         </>;
 
 };
 const LinksList = (  ) => {
@@ -115,38 +123,43 @@ const LinksList = (  ) => {
     [ getLinks ]
   );
   return (
-    <div className="links">
+    <ThemeProvider
+      theme={darkTheme}
+    >
+      <div
+        className="links">
 
-      <p>
-        Ссылки на файлы из ваших подписок:
-      </p>
-      <List>
-        { links.map( link =>
-          <ListItem
-            key={ link }
-            className="link"
-          >
-            <ListItemButton
-              component="a"
-              href={ link }
+        <p>
+          Ссылки на файлы из ваших подписок:
+        </p>
+        <List>
+          { links.map( link =>
+            <ListItem
+              className="link"
+              key={ link }
             >
-              <ListItemText
-                primary={ methods.getFileName( link ) }
-              />
-              <ListItemIcon
-                sx={{
-                  height  : "2em",
-                  minWidth: "auto",
-                }}
+              <ListItemButton
+                component="a"
+                href={ link }
               >
-                <img
-                  src={ fileIcon }
-                  alt="file" />
-              </ListItemIcon>
-            </ListItemButton>
-          </ListItem> ) }
-      </List>
-    </div>
+                <ListItemText
+                  primary={ methods.getFileName( link ) }
+                />
+                <ListItemIcon
+                  sx={{
+                    height  : "2em",
+                    minWidth: "auto",
+                  }}
+                >
+                  <img
+                    alt="file"
+                    src={ fileIcon } />
+                </ListItemIcon>
+              </ListItemButton>
+            </ListItem> ) }
+        </List>
+      </div>
+    </ThemeProvider>
   );
 
 };
@@ -180,6 +193,10 @@ const RequestForm = ( { updateRequests } ) => {
     setLength,
   ] = React.useState( 1 );
   const [
+    lengths,
+    setLengths,
+  ] = React.useState( [] );
+  const [
     info,
     setInfo,
   ] = React.useState( "" );
@@ -200,12 +217,25 @@ const RequestForm = ( { updateRequests } ) => {
     },
     [ types ]
   );
-  const lengths = [
-    1,
-    3,
-    6,
-    12,
-  ];
+  const refreshLengths = React.useCallback(
+    async() =>
+      await listLengths( type )
+        .then( result => {
+
+          setLengths( result );
+          setLength( result[ 0 ] );
+
+        } ),
+    [ type ]
+  );
+  React.useEffect(
+    () => {
+
+      refreshLengths();
+
+    },
+    [ refreshLengths ]
+  );
 
   const makeRequest = async event => {
 
@@ -250,50 +280,59 @@ const RequestForm = ( { updateRequests } ) => {
   };
 
   return (
-    <form
-      id="request-form"
-      onSubmit={makeRequest}
+    <ThemeProvider
+      theme={darkTheme}
     >
-      <select
-        id="request-type"
-        onChange={event =>
-          setType( event.target.value )}
+      <form
+        id="request-form"
+        onSubmit={makeRequest}
       >
-        { types.map( type =>
-          (
-            <option
-              value={ type }
-              key={ type }
-            >
-              { type }
-            </option>
-          ) ) }
-      </select>
-      <select
-        id="request-length"
-        onChange={ event =>
-          setLength( Number( event.target.value ) ) }
-      >
-        { lengths.map( length =>
-          (
-            <option
-              value={ length }
-              key={ length }
-            >
-              { length }
-            </option>
-          ) ) }
-      </select>
-      <button
-        id="request-submit"
-        type="submit"
-      >
-        Отправить запрос
-      </button>
-      <p hidden={ info === "" }>
-        { info }
-      </p>
-    </form>
+        <Select
+          id="request-type"
+          onChange={event =>
+            setType( event.target.value ) }
+          size="small"
+          value={ type || "" }
+        >
+          { types.map( type =>
+            (
+              <MenuItem
+                key={ type }
+                value={ type }
+              >
+                { type }
+              </MenuItem>
+            ) ) }
+        </Select>
+        <Select
+          id="request-length"
+          onChange={ event =>
+            setLength( Number( event.target.value ) ) }
+          size="small"
+          value={ length || lengths[ 0 ] }
+        >
+          { lengths.map( length_ =>
+            (
+              <MenuItem
+                key={ length_ }
+                value={ length_ }
+              >
+                { length_ }
+              </MenuItem>
+            ) ) }
+        </Select>
+        <Button
+          id="request-submit"
+          type="submit"
+        >
+          Отправить запрос
+        </Button>
+        <p
+          hidden={ info === "" }>
+          { info }
+        </p>
+      </form>
+    </ThemeProvider>
   );
 
 };
@@ -308,7 +347,8 @@ const RequestsList          = ( { requests } ) =>
       </p>
       <List>
         { requests.map( ( /** @type {string} */ request ) =>
-          <ListItem key={ request }>
+          <ListItem
+            key={ request }>
             <ListItemText
               classes={ {
                 primary  : "request-primary",
@@ -329,6 +369,19 @@ const listSubscriptionTypes = async() => {
   const listResult = await listAll( reference );
   return listResult.prefixes.map( folder =>
     folder.name );
+
+};
+
+// retrieve the lengths from database/types/type/lengths array
+const listLengths = async( /** @type {string} */ type ) => {
+
+  const firestore = getFirestore();
+  const document_ = await getDoc( doc(
+    firestore,
+    "types",
+    type
+  ) );
+  return document_.data().lengths;
 
 };
 export default UserPanel;

@@ -21,39 +21,41 @@ import methods from "../methods";
 const RequestsList = ( {
   email,
   database,
+  refreshRequests,
   refreshSubscriptions,
+  globalRequests,
 } ) => {
 
   const [
     requests,
     setRequests,
-  ] = React.useState( {} );
-  const getData = React.useCallback(
+  ] = React.useState( /** @type {Record<string, string>} */ {} );
+  const refreshRequestsLocal = React.useCallback(
     async() => {
 
-      await getRequests(
+      const documentReference = doc(
         database,
+        "requests",
         email
-      )
-        .then( data =>
-          ( data
-            ? setRequests( data )
-            : setRequests( {} ) ) );
+      );
+      const documentSnap      = await getDoc( documentReference );
+      setRequests( documentSnap.data() || {} );
 
     },
     [
-      database,
       email,
+      globalRequests,
     ]
   );
   React.useEffect(
     () => {
 
-      const data = getData();
+      refreshRequestsLocal();
 
     },
-    [ getData ]
+    [ refreshRequestsLocal ]
   );
+
   return (
     <div
       className="requests"
@@ -63,7 +65,8 @@ const RequestsList = ( {
         Boolean( requests )
         && (
           <>
-            <p hidden={Object.keys( requests ).length === 0}>
+            <p
+              hidden={Object.keys( requests ).length === 0}>
               Запросы:
             </p>
             <List>
@@ -74,14 +77,13 @@ const RequestsList = ( {
                 ] ) =>
                   (
                     <RequestElement
-                      key                  = { key }
-                      type                 = { key }
-                      expiry               = { value }
                       database             = { database }
                       email                = { email }
-                      requests             = { requests }
-                      setRequests          = { setRequests }
+                      expiry               = { value }
+                      key                  = { key }
+                      refreshRequests      = { refreshRequests }
                       refreshSubscriptions = { refreshSubscriptions }
+                      type                 = { key }
                     />
                   ) )}
             </List>
@@ -96,15 +98,18 @@ const RequestElement = ( {
   expiry,
   database,
   email,
-  requests,
-  setRequests,
   refreshSubscriptions,
+  refreshRequests,
 } ) => {
 
   const [
     anchorElement,
     setAnchorElement,
   ] = React.useState( null );
+  const [
+    requests,
+    setRequests,
+  ]    = React.useState( [] );
 
   const handleClick = event => {
 
@@ -120,7 +125,7 @@ const RequestElement = ( {
 
   const open = Boolean( anchorElement );
   const id   = open
-    ? "simple-popover"
+    ? "popover"
     : undefined;
 
   const handleAccept =  async() => {
@@ -133,10 +138,7 @@ const RequestElement = ( {
     )
       .then( async() => {
 
-        setRequests( methods.removeFromObject(
-          requests,
-          type
-        ) );
+        refreshRequests();
         refreshSubscriptions();
 
       } );
@@ -144,7 +146,8 @@ const RequestElement = ( {
   };
 
   return (
-    <ListItem className="request">
+    <ListItem
+      className="request">
       <ListItemText>
         { `${ type }: ${ expiry } мес.` }
       </ListItemText>
@@ -155,10 +158,10 @@ const RequestElement = ( {
         Изменить
       </ListItemButton>
       <Menu
-        id={id}
         anchorEl={ anchorElement }
-        open={ open }
+        id={id}
         onClose={ handleClose }
+        open={ open }
       >
         <MenuItem
           onClick={ () => {
@@ -181,10 +184,7 @@ const RequestElement = ( {
             )
               .then( () => {
 
-                setRequests( methods.removeFromObject(
-                  requests,
-                  type
-                ) );
+                refreshRequests();
 
               } );
 
@@ -200,9 +200,7 @@ const RequestElement = ( {
 
 // Get subscription requests for a user and return them as an array
 const getRequests = async(
-  /** @type {import("@firebase/firestore").Firestore} */ database,
-  /** @type {string} */ email
-) => {
+  /** @type {string} */ email ) => {
 
   try {
 

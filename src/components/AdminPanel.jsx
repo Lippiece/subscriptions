@@ -3,6 +3,8 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import {
   collection,
+  doc,
+  getDoc,
   getDocs,
   getFirestore,
 } from "firebase/firestore";
@@ -26,6 +28,10 @@ const AdminPanel = ( {
     subscribers,
     setSubscribers,
   ] = React.useState( [] );
+  const [
+    requests,
+    setRequests,
+  ] = React.useState( {} );
   const refreshSubscriptions = React.useCallback(
     async() => {
 
@@ -43,24 +49,52 @@ const AdminPanel = ( {
     },
     [ refreshSubscriptions ]
   );
+  const refreshRequests = React.useCallback(
+    async() => {
 
-  return <>
-    <NewUserForm
-      auth                 = { auth }
-      userEmail            = { userEmail }
-      userPassword         = { userPassword }
-      refreshSubscriptions = { refreshSubscriptions }
-    />
-    <SubscribersList
-      database             = { database }
-      subscribers          = { subscribers }
-      refreshSubscriptions = { refreshSubscriptions }
-    />
-    {/* <SubscriptionsPanel/> */}
-  </>;
+      await getRequests()
+        .then( data =>
+          ( data
+            ? setRequests( data )
+            : setRequests( {} ) ) );
+
+    },
+    [ subscribers ]
+  );
+  React.useEffect(
+    () => {
+
+      const data = refreshRequests();
+
+    },
+    [ refreshRequests ]
+  );
+
+  return (
+    <>
+      <NewUserForm
+        auth                 = { auth }
+        refreshSubscriptions = { refreshSubscriptions }
+        userEmail            = { userEmail }
+        userPassword         = { userPassword }
+      />
+      <SubscribersList
+        database             = { database }
+        globalRequests       = { requests }
+        refreshSubscriptions = { refreshSubscriptions }
+        requests             = { requests }
+        setRequests          = { setRequests }
+        subscribers          = { subscribers }
+        refreshRequests      = { refreshRequests }
+      />
+      <SubscriptionsPanel
+        refreshGlobalSubscriptions={ refreshSubscriptions }
+        refreshRequests={ refreshRequests }
+      />
+    </> );
 
 };
-const getSubscriptions = async database => {
+const getSubscriptions = async() => {
 
   try {
 
@@ -82,4 +116,26 @@ const getSubscriptions = async database => {
 
 };
 
+// get requests for all users
+const getRequests = async() => {
+
+  try {
+
+    const snapshot = await getDocs( collection(
+      database,
+      "requests"
+    ) );
+    return snapshot.docs.map( document_ =>
+      [
+        document_.id,
+        document_.data(),
+      ] );
+
+  } catch ( error ) {
+
+    console.error( error );
+
+  }
+
+};
 export default AdminPanel;
