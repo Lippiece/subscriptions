@@ -261,6 +261,7 @@ const SubscriptionsPanel = ( {
               key                        = { subscription }
               refreshGlobalSubscriptions = { refreshGlobalSubscriptions }
               refreshRequests            = { refreshRequests }
+              refreshSubscriptions       = { refreshSubscriptions }
               subscription               = { subscription }
             />
           ) ) }
@@ -273,6 +274,7 @@ const SubscriptionsPanel = ( {
 const SubscriptionItem = ( {
   /** @type {string} */ subscription,
   refreshGlobalSubscriptions,
+  refreshSubscriptions,
   refreshRequests,
 } ) => {
 
@@ -401,8 +403,9 @@ const SubscriptionItem = ( {
     setInfo( "" );
 
     setStatus( "initial" );
-    refreshGlobalSubscriptions();
-    refreshRequests();
+    await refreshSubscriptions();
+    await refreshGlobalSubscriptions();
+    await refreshRequests();
 
   };
 
@@ -581,7 +584,7 @@ const SubscriptionItem = ( {
                       >
                         <CloseIcon />
                       </ListItemButton>
-                      </ListItem> ) ) }
+                    </ListItem> ) ) }
                 </List>
                 <ListItemButton
                   onClick={ () =>
