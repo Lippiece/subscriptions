@@ -80,7 +80,7 @@ const UserPanel = ( { email } ) => {
       requests={requests}
       setRequests={setRequests}
     />
-         </>;
+  </>;
 
 };
 const LinksList = (  ) => {
@@ -215,7 +215,7 @@ const RequestForm = ( { updateRequests } ) => {
       getTypes();
 
     },
-    [ types ]
+    [ getTypes ]
   );
   const refreshLengths = React.useCallback(
     async() =>
