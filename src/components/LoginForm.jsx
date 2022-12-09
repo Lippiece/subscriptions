@@ -53,6 +53,7 @@ export const LoginForm = ( {
       setUserPassword( operatorPassword );
       const userType = await getUserType( operatorEmail );
       setUser( userType );
+      setInfo( "" );
 
     } catch ( error ) {
 
@@ -70,20 +71,20 @@ export const LoginForm = ( {
         onSubmit={ login }
       >
         <input
-          type="email"
           onChange={
             event =>
               setEmail( event.target.value )
           }
           placeholder="Email"
+          type="email"
         />
         <input
-          type="password"
           onChange={
             event =>
               setPassword( event.target.value )
           }
           placeholder="Пароль"
+          type="password"
         />
         <button
           type="submit">

@@ -49,6 +49,10 @@ import {
 import React from "react";
 
 const darkTheme   = createTheme( { palette: { mode: "dark" } } );
+/**
+ * It returns a list of all the folders in the storage bucket
+ * @returns An array of folder names.
+ */
 const listFolders = async() => {
 
   const storage    = getStorage();

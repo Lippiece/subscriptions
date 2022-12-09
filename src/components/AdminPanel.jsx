@@ -1,4 +1,6 @@
 /* eslint-disable fp/no-nil, fp/no-mutation, fp/no-unused-expression */
+import "../css/AdminPanel.css";
+
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import {
@@ -81,11 +83,11 @@ const AdminPanel = ( {
       <SubscribersList
         database             = { database }
         globalRequests       = { requests }
+        refreshRequests      = { refreshRequests }
         refreshSubscriptions = { refreshSubscriptions }
         requests             = { requests }
         setRequests          = { setRequests }
         subscribers          = { subscribers }
-        refreshRequests      = { refreshRequests }
       />
       <SubscriptionsPanel
         refreshGlobalSubscriptions={ refreshSubscriptions }

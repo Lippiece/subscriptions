@@ -1,16 +1,27 @@
 /* eslint-disable fp/no-unused-expression */
 import "../css/forms.css";
 
+import Button from "@mui/material/Button";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import {
+  createTheme, ThemeProvider,
+} from "@mui/material/styles";
+import TextField from "@mui/material/TextField";
 import {
   createUserWithEmailAndPassword,
   fetchSignInMethodsForEmail,
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
+import {
+  getStorage, listAll, ref,
+} from "firebase/storage";
 import React from "react";
 
 import methods from "../methods";
 
+const darkTheme   = createTheme( { palette: { mode: "dark" } } );
 const NewUserForm = ( {
   auth,
   userEmail,
@@ -42,6 +53,27 @@ const NewUserForm = ( {
     hidden_,
     setHidden,
   ] = React.useState( true );
+  const [
+    types,
+    setTypes,
+  ] = React.useState( [] );
+  const refreshTypes = React.useCallback(
+    async() => {
+
+      await listFolders()
+        .then( setTypes );
+
+    },
+    []
+  );
+  React.useEffect(
+    () => {
+
+      refreshTypes();
+
+    },
+    [ refreshTypes ]
+  );
   const updateUser = async event => {
 
     event.preventDefault();
@@ -96,87 +128,104 @@ const NewUserForm = ( {
     }
 
   };
+  const numberInputProperties = {
+    max: 60,
+    min: 1,
+  };
 
   return (
-    <div className="form-container">
-      <button
-        onClick={
-          () =>
-            setHidden( !hidden_ )
-        }
-        id="hide-button"
-      >
-        {`${ hidden_
-          ? "Показать"
-          : "Скрыть" } форму`}
-      </button>
-      <form
-        onSubmit={ updateUser }
-        hidden={ hidden_ }
-      >
-        <input
-          type="email"
-          onChange={
-            event =>
-              setEmail( event.target.value )
+    <ThemeProvider
+      theme={ darkTheme }
+    >
+      <div
+        className="form-container">
+        <Button
+          id="hide-button"
+          onClick={
+            () =>
+              setHidden( !hidden_ )
           }
-          placeholder="Email"
-          required
-          pattern="^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
-        />
-        <input
-          id="password"
-          type="password"
-          onChange={
-            event =>
-              setPassword( event.target.value )
-          }
-          placeholder="Пароль"
-          minLength={6}
-        />
-        <input
-          type="number"
-          onChange={
-            event =>
-              setSubLength( Number( event.target.value ) )
-          }
-          placeholder="Срок"
-          required
-          min="1"
-          max="60"
-        />
-        <select
-          onChange={
-            event =>
-              setSubType( event.target.value )
-          } >
-          <option>
-            A
-          </option>
-          <option>
-            B
-          </option>
-          <option>
-            C
-          </option>
-        </select>
-        <button
-          type="submit"
-          hidden={( email + password ).length < 10}
         >
-          { password.length > 0
-            ? "Добавить пользователя"
-            : "Изменить подписку"
-          }
-        </button>
-      </form>
-      <p
-        className="info"
-        hidden={ info.length === 0 }>
-        { info }
-      </p>
-    </div>
+          {`${ hidden_
+            ? "Показать"
+            : "Скрыть" } форму`}
+        </Button>
+        <form
+          hidden={ hidden_ }
+          onSubmit={ updateUser }
+        >
+          <TextField
+            label="Email"
+            onChange={
+              event =>
+                setEmail( event.target.value )
+            }
+            pattern="^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
+            required
+            size="small"
+            type="email"
+          />
+          <TextField
+            id="password"
+            label = "Пароль"
+            minLength={6}
+            onChange={
+              event =>
+                setPassword( event.target.value )
+            }
+            size  = "small"
+            type  = "password"
+          />
+          <TextField
+            inputProps={ numberInputProperties }
+            label="Срок"
+            onChange={
+              event =>
+                setSubLength( Number( event.target.value ) )
+            }
+            required
+            size="small"
+            type="number"
+          />
+          <Select
+            onChange={
+              event =>
+                setSubType( event.target.value )
+            } >
+            { types.map( type =>
+              <MenuItem
+                key={ type }
+                value={ type }>
+                { type }
+              </MenuItem> ) }
+          </Select>
+          <Button
+            hidden={( email + password ).length < 10}
+            type="submit"
+          >
+            { password.length > 0
+              ? "Добавить пользователя"
+              : "Изменить подписку"
+            }
+          </Button>
+        </form>
+        <p
+          className="info"
+          hidden={ info.length === 0 }>
+          { info }
+        </p>
+      </div>
+    </ThemeProvider>
   );
+
+};
+const listFolders = async() => {
+
+  const storage    = getStorage();
+  const reference  = ref( storage );
+  const listResult = await listAll( reference );
+  return listResult.prefixes.map( folder =>
+    folder.name );
 
 };
 

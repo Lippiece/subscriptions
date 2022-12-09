@@ -27,31 +27,37 @@ const SubscribersList = ( {
   refreshSubscriptions,
 } ) =>
   (
-    <List
-      id="subscriptions"
-    >
-      { subscribers.map( subscriber => {
+    <div
+      className={"subscribers-block"}>
+      <h1>
+        Подписчики:
+      </h1>
+      <List
+        id="subscriptions"
+      >
+        { subscribers.map( subscriber => {
 
-        const [
-          email,
-          data,
-        ] = subscriber;
-        return (
-          <SubscriberItem
-            data                 = { data }
-            database             = { database }
-            email                = { email }
-            globalRequests       = { globalRequests }
-            key                  = { email }
-            refreshRequests      = { refreshRequests }
-            refreshSubscriptions = { refreshSubscriptions }
-            requests             = { requests }
-            setRequests          = { setRequests }
-          />
-        );
+          const [
+            email,
+            data,
+          ] = subscriber;
+          return (
+            <SubscriberItem
+              data                 = { data }
+              database             = { database }
+              email                = { email }
+              globalRequests       = { globalRequests }
+              key                  = { email }
+              refreshRequests      = { refreshRequests }
+              refreshSubscriptions = { refreshSubscriptions }
+              requests             = { requests }
+              setRequests          = { setRequests }
+            />
+          );
 
-      } ) }
-    </List>
+        } ) }
+      </List>
+    </div>
   );
 
 const SubscriberItem     = ( {
@@ -70,9 +76,9 @@ const SubscriberItem     = ( {
     >
       <ListItemText
         primary={ email } />
-      <p>
+      <h2>
         Активные подписки:
-      </p>
+      </h2>
       <List>
         { data.subs
           ? Object.entries( data.subs )

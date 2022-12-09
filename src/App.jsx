@@ -1,6 +1,10 @@
 /* eslint-disable fp/no-mutation,fp/no-unused-expression,fp/no-nil */
 import "./css/App.css";
 
+import Button from "@mui/material/Button";
+import {
+  createTheme, ThemeProvider,
+} from "@mui/material/styles";
 import {
   getAuth,
   signOut,
@@ -14,7 +18,8 @@ import {
 } from "./components/LoginForm";
 import UserPanel from "./components/UserPanel";
 
-const App = () => {
+const darkTheme = createTheme( { palette: { mode: "dark" } } );
+const App       = () => {
 
   const [
     userType,
@@ -51,15 +56,16 @@ const App = () => {
   );
 
   return (
-    <div className="app">
+    <div
+      className="app">
       <ExitButton
-        user={userType}
-        setUser={setUserType}/>
+        setUser={setUserType}
+        user={userType}/>
       <LoginForm
-        user={ userType }
         setUser={ setUserType }
         setUserEmail={ setUserEmail }
         setUserPassword={ setUserPassword }
+        user={ userType }
       />
       { userType === "admin"
       && <AdminPanel
@@ -67,7 +73,8 @@ const App = () => {
         userPassword={ userPassword }
       /> }
       { userType === "sub"
-      && <UserPanel email={userEmail} /> }
+      && <UserPanel
+        email={userEmail} /> }
     </div>
   );
 
@@ -80,18 +87,21 @@ const ExitButton = ( {
   const auth = getAuth();
 
   return (
-    <button
-      onClick={ () => {
+    <ThemeProvider
+      theme={ darkTheme }>
+      <Button
+        className="exit-button"
+        hidden={!user}
+        onClick={ () => {
 
-        setUser( "" );
-        signOut( auth );
+          setUser( "" );
+          signOut( auth );
 
-      } }
-      className="exit-button"
-      hidden={!user}
-    >
-      Выйти
-    </button>
+        } }
+      >
+        Выйти
+      </Button>
+    </ThemeProvider>
   );
 
 };
